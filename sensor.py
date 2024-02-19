@@ -51,6 +51,7 @@ def setup_platform(
         HomeLoadSensor(cache),
         BatteryUseSensor(cache),
         GridUseSensor(cache),
+        SolarProductionSensor(cache),
         ])
 
 UPDATE_INTERVAL = 15 * 60
@@ -149,3 +150,22 @@ class GridUseSensor(SensorEntity):
         """
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.grid_use
+
+class SolarProductionSensor(SensorEntity):
+    """Shows the current state of charge of the battery"""
+
+    _attr_name = "franklinwh solar production"
+    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.solar_production
