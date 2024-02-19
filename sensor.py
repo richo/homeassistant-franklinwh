@@ -49,7 +49,7 @@ def setup_platform(
 class FranklinBatterySensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "Example Temperature"
+    _attr_name = "Battery State of Charge"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
