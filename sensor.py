@@ -65,7 +65,7 @@ class CachingClient(object):
         self.data = self.update_func()
 
     def fetch(self):
-        with self.mutex():
+        with self.mutex:
             now = time.monotonic()
             if now > self.last_fetched + UPDATE_INTERVAL:
                 self.last_fetched = now
