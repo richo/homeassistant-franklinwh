@@ -43,7 +43,7 @@ def setup_platform(
     access_token: str = config[CONF_ACCESS_TOKEN]
     gateway: str = config[CONF_ID]
 
-    client = Client(access_token, gateway)
+    client = franklinwh.Client(access_token, gateway)
     cache = CachingClient(client.get_stats)
 
     add_entities([
