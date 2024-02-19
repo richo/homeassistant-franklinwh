@@ -12,7 +12,14 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.const import UnitOfPower, UnitOfEnergy
+from homeassistant.const import (
+        UnitOfPower,
+        UnitOfEnergy,
+        PERCENTAGE,
+        CONF_ACCESS_TOKEN,
+        CONF_ID,
+        )
+
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
