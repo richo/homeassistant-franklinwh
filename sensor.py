@@ -47,8 +47,10 @@ def setup_platform(
     cache = CachingClient(client.get_stats)
 
     add_entities([
-        FranklinBatterySensor(access_token, gateway),
-        HomeLoadSensor(access_token, gateway)
+        FranklinBatterySensor(cache),
+        HomeLoadSensor(cache),
+        BatteryUseSensor(cache),
+        GridUseSensor(cache),
         ])
 
 UPDATE_INTERVAL = 15 * 60
