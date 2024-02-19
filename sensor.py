@@ -41,7 +41,10 @@ def setup_platform(
     access_token: str = config[CONF_ACCESS_TOKEN]
     gateway: str = config[CONF_ID]
 
-    add_entities([FranklinBatterySensor(access_token, gateway)])
+    add_entities([
+        FranklinBatterySensor(access_token, gateway),
+        HomeLoadSensor(access_token, gateway)
+        ])
 
 
 # TODO(richo) Figure out how to have a singleton cache for the franklin data
@@ -49,7 +52,7 @@ def setup_platform(
 class FranklinBatterySensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "Battery State of Charge"
+    _attr_name = "state of charge"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -64,3 +67,22 @@ class FranklinBatterySensor(SensorEntity):
         """
         stats = self._client.get_stats()
         self._attr_native_value = stats.current.battery_soc
+
+class HomeLoadSensor(SensorEntity):
+    """Shows the current state of charge of the battery"""
+
+    _attr_name = "Home Load"
+    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, token, gateway):
+        self._client = franklinwh.Client(token, gateway)
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._client.get_stats()
+        self._attr_native_value = stats.current.home_load
