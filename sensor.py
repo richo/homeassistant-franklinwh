@@ -41,8 +41,7 @@ def setup_platform(
     access_token: str = config[CONF_ACCESS_TOKEN]
     gateway: str = config[CONF_ID]
 
-    add_entities([FranklinSensor()])
-
+    add_entities([FranklinBatterySensor(access_token, gateway)])
 
 
 # TODO(richo) Figure out how to have a singleton cache for the franklin data
