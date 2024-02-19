@@ -129,7 +129,7 @@ class BatteryUseSensor(SensorEntity):
         This is the only method that should fetch new data for Home Assistant.
         """
         stats = self._cache.fetch()
-        self._attr_native_value = stats.current.grid_use
+        self._attr_native_value = stats.current.battery_use
 
 class GridUseSensor(SensorEntity):
     """Shows the current state of charge of the battery"""
