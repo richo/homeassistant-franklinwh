@@ -20,6 +20,7 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
             vol.Required(CONF_ACCESS_TOKEN): cv.string,
             vol.Required(CONF_ID): cv.string,
+            vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
             }
         )
 
