@@ -53,7 +53,6 @@ def setup_platform(
         BatteryUseSensor(cache),
         GridUseSensor(cache),
         SolarProductionSensor(cache),
-        SmartCircuitSwitch("1 + 3", cache),
         ])
 
 UPDATE_INTERVAL = 15 * 60
