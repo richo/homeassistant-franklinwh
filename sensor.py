@@ -173,24 +173,3 @@ class SolarProductionSensor(SensorEntity):
         self._attr_native_value = stats.current.solar_production
 
 
-# Is it chill to have a switch in here? We'll see!
-class SmartCircuitSwitch(SwitchEntity):
-    def __init__(self, name, cache):
-        self._is_on = False
-        self._attr_name = "franklinwh smart circuit {}".format(name)
-        self.cache = cache
-
-    @property
-    def is_on(self):
-        """If the switch is currently on or off."""
-        return self._is_on
-
-    def turn_on(self, **kwargs):
-        """Turn the switch on."""
-        self._is_on = True
-
-    def turn_off(self, **kwargs):
-        """Turn the switch off."""
-        self._is_on = False
-
-
