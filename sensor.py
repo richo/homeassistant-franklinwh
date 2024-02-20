@@ -177,7 +177,7 @@ class SolarProductionSensor(SensorEntity):
 class SmartCircuitSwitch(SwitchEntity):
     def __init__(self, name, cache):
         self._is_on = False
-        self._attr_name = "franklinwh smart circuit " % name
+        self._attr_name = "franklinwh smart circuit {}".format(name)
         self.cache = cache
 
     @property
