@@ -53,7 +53,7 @@ def setup_platform(
         BatteryUseSensor(cache),
         GridUseSensor(cache),
         SolarProductionSensor(cache),
-        SmartCircuitSwitch(cache),
+        SmartCircuitSwitch("1 + 3", cache),
         ])
 
 UPDATE_INTERVAL = 15 * 60
@@ -175,10 +175,9 @@ class SolarProductionSensor(SensorEntity):
 
 # Is it chill to have a switch in here? We'll see!
 class SmartCircuitSwitch(SwitchEntity):
-    _attr_has_entity_name = True
-
-    def __init__(self, cache):
+    def __init__(self, name, cache):
         self._is_on = False
+        self._attr_name = "franklinwh smart circuit " % name
         self.cache = cache
 
     @property
