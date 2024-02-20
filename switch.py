@@ -8,6 +8,10 @@ from homeassistant.components.switch import (
 )
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
+from homeassistant.const import (
+        CONF_ACCESS_TOKEN,
+        CONF_ID,
+        )
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
