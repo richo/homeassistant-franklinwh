@@ -36,9 +36,9 @@ def setup_platform(
     """Set up the sensor platform."""
     access_token: str = config[CONF_ACCESS_TOKEN]
     gateway: str = config[CONF_ID]
-    name: str = config[CONF_ID]
+    name: str = config[CONF_NAME]
 
-    switches: list[int] = map(lambda x: x-1, config[CONF_SWITCHES])
+    switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
 
     client = franklinwh.Client(access_token, gateway)
 
@@ -59,7 +59,7 @@ class SmartCircuitSwitch(SwitchEntity):
         values = list(self.switches.map(lambda x: state[x]))
         if all(values):
             self._is_on = True
-        elif all(map(lambda x: x is False)):
+        elif all(map(lambda x: x is False, values)):
             self._is_on = False
         else:
             # Something's fucky!
