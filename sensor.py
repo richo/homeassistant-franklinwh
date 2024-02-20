@@ -14,6 +14,7 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
+from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import (
         UnitOfPower,
         UnitOfEnergy,
@@ -52,6 +53,7 @@ def setup_platform(
         BatteryUseSensor(cache),
         GridUseSensor(cache),
         SolarProductionSensor(cache),
+        SmartCircuitSwitch(cache),
         ])
 
 UPDATE_INTERVAL = 15 * 60
@@ -169,3 +171,27 @@ class SolarProductionSensor(SensorEntity):
         """
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.solar_production
+
+
+# Is it chill to have a switch in here? We'll see!
+class SmartCircuitSwitch(SwitchEntity):
+    _attr_has_entity_name = True
+
+    def __init__(self, cache):
+        self._is_on = False
+        self.cache = cache
+
+    @property
+    def is_on(self):
+        """If the switch is currently on or off."""
+        return self._is_on
+
+    def turn_on(self, **kwargs):
+        """Turn the switch on."""
+        self._is_on = True
+
+    def turn_off(self, **kwargs):
+        """Turn the switch off."""
+        self._is_on = False
+
+
