@@ -12,6 +12,9 @@ from homeassistant.const import (
         CONF_ACCESS_TOKEN,
         CONF_ID,
         )
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
