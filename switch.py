@@ -20,6 +20,7 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
             vol.Required(CONF_ACCESS_TOKEN): cv.string,
             vol.Required(CONF_ID): cv.string,
+            vol.Required(CONF_NAME): cv.string,
             vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
             }
         )
@@ -33,19 +34,34 @@ def setup_platform(
     """Set up the sensor platform."""
     access_token: str = config[CONF_ACCESS_TOKEN]
     gateway: str = config[CONF_ID]
+    name: str = config[CONF_ID]
+
+    switches: list[int] = map(lambda x: x-1, config[CONF_SWITCHES])
 
     client = franklinwh.Client(access_token, gateway)
 
     add_entities([
-        SmartCircuitSwitch("1 + 3", client),
+        SmartCircuitSwitch(name, switches, client),
         ])
 
 # Is it chill to have a switch in here? We'll see!
 class SmartCircuitSwitch(SwitchEntity):
-    def __init__(self, name, client):
+    def __init__(self, name, switches, client):
         self._is_on = False
-        self._attr_name = "franklinwh smart circuit {}".format(name)
+        self.switches = switches
+        self._attr_name = "franklinwh {}".format(name)
         self.client = client
+
+    def update(self):
+        state = self.client.get_switch_state()
+        values = list(self.switches.map(lambda x: state[x]))
+        if all(values):
+            self._is_on = True
+        elif all(map(lambda x: x is False)):
+            self._is_on = False
+        else:
+            # Something's fucky!
+            self._is_on = None
 
     @property
     def is_on(self):
