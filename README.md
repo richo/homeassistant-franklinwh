@@ -4,7 +4,16 @@ This implements a collection of sensors, and a switch implementation for the Fra
 
 ### Installation
 
-Copy this folder to `<config_dir>/custom_components/franklin_wh/`.
+The install requires you to copy this folder to `<config_dir>/custom_components/franklin_wh/`. One way to do this is to use the web terminal from the [Advanced SSH & Web Terminal add-on](https://github.com/hassio-addons/addon-ssh)
+
+Within the terminal screen, paste the following commands
+
+cd config/custom_components
+git clone https://github.com/richo/homeassistant-franklinwh
+mv homeassistant-franklinwh franklin_wh
+
+
+
 
 Add the following to your `configuration.yaml` file:
 
