@@ -2,45 +2,66 @@
 
 This implements a collection of sensors, and a switch implementation for the Franklin WH home energy system.
 
-### Installation
+The most basic sensors are currently shown in this screenshot
 
-The install requires you to copy this folder to `<config_dir>/custom_components/franklin_wh/`. One way to do this is to use the web terminal from the [Advanced SSH & Web Terminal add-on](https://github.com/hassio-addons/addon-ssh)
-
-Within the terminal screen, paste the following commands
-
-cd config/custom_components
-git clone https://github.com/richo/homeassistant-franklinwh
-mv homeassistant-franklinwh franklin_wh
+![image](https://github.com/slackwilson/homeassistant-franklinwh/assets/109522242/e9d0dd64-dde2-4d40-b0ce-42c108e56086)
 
 
+# Prerequisites
+
+You need an Access Token and your ID (serial number) 
+
+The ID is available from the franklin app under More -> Site Address. It's shown as your Serial Number.
+
+You can get the access token by running the login.py script bundled in the [franklinwh python
+module](https://github.com/richo/franklinwh-python) 
+
+# Installation
 
 
-Add the following to your `configuration.yaml` file:
+One way to do this is to use the web terminal from the [Advanced SSH & Web Terminal add-on](https://github.com/hassio-addons/addon-ssh)
 
-# Example configuration.yaml entry
+Within the terminal screen, paste the following command. This command clones the files into the correct folder on your system `<config_dir>/custom_components/franklin_wh/` 
+```
+git clone https://github.com/richo/homeassistant-franklinwh config/custom_components/franklin_wh
+```
+
+If you see no errors similar to the follwing, you're done with the file installation 
+![image](https://github.com/slackwilson/homeassistant-franklinwh/assets/109522242/8cf66ea9-3947-4f47-91aa-d6da1b2621e1)
+
+
+
+# Configuration
+
+To add the basic sensors to your home assitant add the following to your `configuration.yaml` file:
+
+Example sensors configuration.yaml entry.
+Note: you should wrap the token in "" 
+
+```yaml
+sensor:
+  - platform: franklin_wh
+    access_token: ccess_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    id: 1005xxxxxxxxxxx
+```
+
+And to add switches, see below as an example, The switches in the example is the smart circuits that should be
+bound to that virtual switch.
+
 
 ```yaml
 switch:
   - platform: franklin_wh
-    access_token: !secret franklin_wh_token
+    access_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     id: 1005xxxxxxxxxxx
     switches: [3]
-    name: "test switch"
+    name: "FWH switch1"
   - platform: franklin_wh
-    access_token: !secret franklin_wh_token
+    access_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     id: 1005xxxxxxxxxxx
     switches: [1, 2]
-    name: "EV Charger"
-
-sensor:
-  - platform: franklin_wh
-    access_token: !secret franklin_wh_token
-    id: 1005xxxxxxxxxxx
+    name: "FWH switch2"
 ```
 
-You can get the access token with the script bundled in the franklinwh python
-module, the ID is available from the app and will also be spat out from that
-python script when I figure out an easy way to get it.
 
-The switches list in the switch config is the smart circuits that should be
-bound to that virtual switch.
+
