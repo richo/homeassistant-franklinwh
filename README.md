@@ -41,7 +41,7 @@ Note: you should wrap the token in ""
 ```yaml
 sensor:
   - platform: franklin_wh
-    access_token: ccess_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    access_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
     id: 1005xxxxxxxxxxx
 ```
 
