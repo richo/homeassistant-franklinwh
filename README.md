@@ -9,24 +9,24 @@ The most basic sensors are currently shown in this screenshot
 
 # Prerequisites
 
-You need an Access Token and your ID (serial number) 
+You need an Access Token and your ID (serial number)
 
 The ID is available from the franklin app under More -> Site Address. It's shown as your Serial Number.
 
 You can get the access token by running the login.py script bundled in the [franklinwh python
-module](https://github.com/richo/franklinwh-python) 
+module](https://github.com/richo/franklinwh-python)
 
 # Installation
 
 
 One way to do this is to use the web terminal from the [Advanced SSH & Web Terminal add-on](https://github.com/hassio-addons/addon-ssh)
 
-Within the terminal screen, paste the following command. This command clones the files into the correct folder on your system `<config_dir>/custom_components/franklin_wh/` 
+Within the terminal screen, paste the following command. This command clones the files into the correct folder on your system `<config_dir>/custom_components/franklin_wh/`
 ```
 git clone https://github.com/richo/homeassistant-franklinwh config/custom_components/franklin_wh
 ```
 
-If you see no errors similar to the follwing, you're done with the file installation 
+If you see no errors similar to the follwing, you're done with the file installation
 ![image](https://github.com/slackwilson/homeassistant-franklinwh/assets/109522242/8cf66ea9-3947-4f47-91aa-d6da1b2621e1)
 
 
