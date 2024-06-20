@@ -57,8 +57,8 @@ def setup_platform(
         BatteryUseSensor(cache),
         GridUseSensor(cache),
         SolarProductionSensor(cache),
-        FWHBattChargeSensor(cache),
-        FWHBattDisChargeSensor(cache),
+        BatteryChargeSensor(cache),
+        BatteryDischargeSensor(cache),
         ])
 
 UPDATE_INTERVAL = 60
@@ -177,10 +177,10 @@ class SolarProductionSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.solar_production
 
-class FWHBattChargeSensor(SensorEntity):
+class BatteryChargeSensor(SensorEntity):
     """Shows the charging stats of the battery"""
 
-    _attr_name = "franklinwh battery charge"
+    _attr_name = "FranklinWH Battery Charge"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL
@@ -196,10 +196,10 @@ class FWHBattChargeSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.totals.battery_charge
 
-class FWHBattDisChargeSensor(SensorEntity):
+class BatteryDischargeSensor(SensorEntity):
     """Shows the charging stats of the battery"""
 
-    _attr_name = "franklinwh battery discharge"
+    _attr_name = "FranklinWH Battery Discharge"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL
