@@ -35,13 +35,15 @@ If you see no errors similar to the follwing, you're done with the file installa
 
 To add the basic sensors to your home assitant add the following to your `configuration.yaml` file:
 
+It is very strongly recommended to put your password in secrets.yaml to avoid accidentally revealing it.
+
 Example sensors configuration.yaml entry.
-Note: you should wrap the token in "" 
 
 ```yaml
 sensor:
   - platform: franklin_wh
-    access_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    username: "email@domain.com"
+    password: !secret franklinwh_password
     id: 1005xxxxxxxxxxx
 ```
 
@@ -52,12 +54,14 @@ bound to that virtual switch.
 ```yaml
 switch:
   - platform: franklin_wh
-    access_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    username: "email@domain.com"
+    password: !secret franklinwh_password
     id: 1005xxxxxxxxxxx
     switches: [3]
     name: "FWH switch1"
   - platform: franklin_wh
-    access_token: "APP_ACCOUNT:xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxnx.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+    username: "email@domain.com"
+    password: !secret franklinwh_password
     id: 1005xxxxxxxxxxx
     switches: [1, 2]
     name: "FWH switch2"
