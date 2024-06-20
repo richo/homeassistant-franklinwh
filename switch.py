@@ -9,7 +9,8 @@ from homeassistant.components.switch import (
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (
-        CONF_ACCESS_TOKEN,
+        CONF_USERNAME,
+        CONF_PASSWORD,
         CONF_ID,
         CONF_NAME,
         CONF_SWITCHES,
@@ -35,7 +36,8 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None
 ) -> None:
     """Set up the sensor platform."""
-    access_token: str = config[CONF_ACCESS_TOKEN]
+    username: str = config[CONF_USERNAME]
+    password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
     name: str = config[CONF_NAME]
 
@@ -43,7 +45,6 @@ def setup_platform(
 
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
-    cache = CachingClient(client.get_stats)
 
     add_entities([
         SmartCircuitSwitch(name, switches, client),
