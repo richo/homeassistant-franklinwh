@@ -28,7 +28,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
-            vol.Required(CONF_ACCESS_TOKEN): cv.string,
+            vol.Required(CONF_USERNAME): cv.string,
+            vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
             }
         )
@@ -41,10 +42,12 @@ def setup_platform(
     discovery_info: DiscoveryInfoType | None = None
 ) -> None:
     """Set up the sensor platform."""
-    access_token: str = config[CONF_ACCESS_TOKEN]
+    username: str = config[CONF_USERNAME]
+    password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
 
-    client = franklinwh.Client(access_token, gateway)
+    fetcher = franklinwh.TokenFetcher(username, password)
+    client = franklinwh.Client(fetcher, gateway)
     cache = CachingClient(client.get_stats)
 
     add_entities([
@@ -55,7 +58,7 @@ def setup_platform(
         SolarProductionSensor(cache),
         ])
 
-UPDATE_INTERVAL = 15 * 60
+UPDATE_INTERVAL = 60
 class CachingClient(object):
     def __init__(self, update_func):
         self.mutex = Lock()

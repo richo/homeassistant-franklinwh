@@ -20,7 +20,8 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
-            vol.Required(CONF_ACCESS_TOKEN): cv.string,
+            vol.Required(CONF_USERNAME): cv.string,
+            vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
             vol.Required(CONF_NAME): cv.string,
             vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
@@ -40,7 +41,9 @@ def setup_platform(
 
     switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
 
-    client = franklinwh.Client(access_token, gateway)
+    fetcher = franklinwh.TokenFetcher(username, password)
+    client = franklinwh.Client(fetcher, gateway)
+    cache = CachingClient(client.get_stats)
 
     add_entities([
         SmartCircuitSwitch(name, switches, client),
@@ -55,15 +58,7 @@ class SmartCircuitSwitch(SwitchEntity):
         self.client = client
 
     def update(self):
-        state = self.client.get_smart_switch_state()
-        values = list(map(lambda x: state[x], self.switches))
-        if all(values):
-            self._is_on = True
-        elif all(map(lambda x: x is False, values)):
-            self._is_on = False
-        else:
-            # Something's fucky!
-            self._is_on = None
+        pass
 
     @property
     def is_on(self):
