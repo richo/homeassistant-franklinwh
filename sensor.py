@@ -59,7 +59,8 @@ def setup_platform(
         SolarProductionSensor(cache),
         BatteryChargeSensor(cache),
         BatteryDischargeSensor(cache),
-        ])
+        GeneratorUseSensor(cache),  # Adding the new generator sensor here
+        ])  
 
 UPDATE_INTERVAL = 60
 class CachingClient(object):
@@ -215,4 +216,17 @@ class BatteryDischargeSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.totals.battery_discharge
 
+class GeneratorUseSensor(SensorEntity):
+    """Shows the current power output of the generator"""
 
+    _attr_name = "FranklinWH Generator Use"
+    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.generator_production
