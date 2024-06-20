@@ -59,7 +59,15 @@ class SmartCircuitSwitch(SwitchEntity):
         self.client = client
 
     def update(self):
-        pass
+        state = self.client.get_smart_switch_state()
+        values = list(map(lambda x: state[x], self.switches))
+        if all(values):
+            self._is_on = True
+        elif all(map(lambda x: x is False, values)):
+            self._is_on = False
+        else:
+            # Something's fucky!
+            self._is_on = None
 
     @property
     def is_on(self):
