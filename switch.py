@@ -54,7 +54,7 @@ class SmartCircuitSwitch(SwitchEntity):
     def __init__(self, name, switches, client):
         self._is_on = False
         self.switches = switches
-        self._attr_name = "franklinwh {}".format(name)
+        self._attr_name = "FranklinWH {}".format(name)
         self.client = client
 
     def update(self):

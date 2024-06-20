@@ -82,7 +82,7 @@ class CachingClient(object):
 class FranklinBatterySensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "franklinwh state of charge"
+    _attr_name = "FranklinWH State of Charge"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -101,7 +101,7 @@ class FranklinBatterySensor(SensorEntity):
 class HomeLoadSensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "franklinwh home load"
+    _attr_name = "FranklinWH Home Load"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -120,7 +120,7 @@ class HomeLoadSensor(SensorEntity):
 class BatteryUseSensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "franklinwh battery use"
+    _attr_name = "FranklinWH Battery Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -139,7 +139,7 @@ class BatteryUseSensor(SensorEntity):
 class GridUseSensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "franklinwh grid use"
+    _attr_name = "FranklinWH Grid Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
@@ -158,7 +158,7 @@ class GridUseSensor(SensorEntity):
 class SolarProductionSensor(SensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "franklinwh solar production"
+    _attr_name = "FranklinWH Solar Production"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
