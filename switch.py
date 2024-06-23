@@ -76,8 +76,14 @@ class SmartCircuitSwitch(SwitchEntity):
 
     def turn_on(self, **kwargs):
         """Turn the switch on."""
-        self._is_on = True
+        switches = [None, None, None]
+        for i in self.switches:
+            switches[i] = True
+        self.client.set_smart_switch_state(switches)
 
     def turn_off(self, **kwargs):
         """Turn the switch off."""
-        self._is_on = False
+        switches = [None, None, None]
+        for i in self.switches:
+            switches[i] = False
+        self.client.set_smart_switch_state(switches)
