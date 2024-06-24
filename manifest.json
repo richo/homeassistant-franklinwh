@@ -1,10 +1,11 @@
 {
   "domain": "franklin_wh",
-  "name": "Battery state",
-  "codeowners": [],
+  "name": "FranklinWH",
+  "codeowners": ["@richo"],
   "dependencies": [],
-  "documentation": "https://github.com/home-assistant/example-custom-config/tree/master/custom_components/example_sensor/",
+  "documentation": "https://github.com/richo/homeassistant-franklinwh/wiki",
   "iot_class": "cloud_polling",
+  "integration_type": "hub",
   "requirements": ["franklinwh>=0.0.7"],
-  "version": "0.1.2"
+  "version": "0.1.3"
 }
