@@ -86,7 +86,7 @@ def setup_platform(
 class ModeSelect(SelectEntity):
     def __init__(self, modes, client):
         self.modes = modes
-        self._current_option = "self_consumption"
+        self._current_option = None
         self._attr_name = "FranklinWH Mode"
         self.client = client
 
@@ -99,7 +99,8 @@ class ModeSelect(SelectEntity):
         return list(self.modes.keys())
 
     def update(self):
-        pass
+        (name, soc) = client.get_mode()
+        self._current_option = name
 
     def select_option(self, option: str):
         mode = MODES[option](self.modes[option])
