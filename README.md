@@ -67,5 +67,18 @@ switch:
     name: "FWH switch2"
 ```
 
+If you want to be able to change the modes (time of use, emergency backup, etc) on your aGate, you need to add a select section to your config:
 
+```yaml
+select:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: 1005xxxxxxxxxxxxxxxx
+    modes:
+      self_consumption: 20
+      emergency_backup: 100
+```
+
+Include the modes you wish to be able to select. The numeric value is the SoC threshold that will be set when you select that mode.
 
