@@ -1,10 +1,17 @@
 #!/usr/bin/env python
 import franklinwh
+from collections.abc import Callable, Hashable
+from typing import Any
 
 from homeassistant.components.select import (
     SelectEntity,
     PLATFORM_SCHEMA as PARENT_PLATFORM_SCHEMA,
 )
+
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+
 
 import voluptuous as vol
 import homeassistant.helpers.config_validation as cv
@@ -12,7 +19,6 @@ from homeassistant.const import (
         CONF_USERNAME,
         CONF_PASSWORD,
         CONF_ID,
-        CONF_NAME,
         CONF_SWITCHES,
         )
 
@@ -34,23 +40,29 @@ def dict_validator(
         if not isinstance(value, dict):
             raise vol.Invalid("Expected a dictionary")
 
-        vol.In(keys)(value.keys())
-        values(value.values())
+        for k, v in value.items():
+            vol.In(keys)(k)
+            values(v)
 
-    return key_value_validator
+        return value
+
+    return dict_validator
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
             vol.Required(CONF_USERNAME): cv.string,
             vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
-            vol.Required(CONF_NAME): cv.string,
-            vol.Required("modes"): cv.dict_validator(
-                MODES.keys(),
-                vol.All(vol.Coerce(int), vol.Range(min=0, max=100))
-                ),
-            }
-        )
+            "modes": vol.All(
+                {
+                    vol.Optional("time_of_use"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+                    vol.Optional("emergency_backup"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+                    vol.Optional("self_consumption"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100)),
+                },
+                cv.has_at_least_one_key("time_of_use", "emergency_backup", "self_consumption")
+                )
+        }
+    )
 
 def setup_platform(
     hass: HomeAssistant,
@@ -62,20 +74,19 @@ def setup_platform(
     username: str = config[CONF_USERNAME]
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
-    name: str = config[CONF_NAME]
-    modes = config["modes"]
+    modes: dict[str, int] = config["modes"]
 
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
 
     add_entities([
-        ModeSelect(name, modes, client),
+        ModeSelect(modes, client),
         ])
 
-class SmartCircuitSwitch(SwitchEntity):
-    def __init__(self, name, modes, client):
+class ModeSelect(SelectEntity):
+    def __init__(self, modes, client):
         self.modes = modes
-        self.current_option = "self_consumption"
+        self._current_option = "self_consumption"
         self._attr_name = "FranklinWH Mode"
         self.client = client
 
@@ -84,14 +95,15 @@ class SmartCircuitSwitch(SwitchEntity):
         return self._current_option
 
     @property
-    def options(self) -> List[str]:
-        return MODES.keys()
+    def options(self) -> list[str]:
+        return list(self.modes.keys())
 
     def update(self):
         pass
 
     def select_option(self, option: str):
         mode = MODES[option](self.modes[option])
-        client.set_mode(mode)
+        self.client.set_mode(mode)
+        self._current_option = option
 
 
