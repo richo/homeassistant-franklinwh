@@ -99,7 +99,7 @@ class ModeSelect(SelectEntity):
         return list(self.modes.keys())
 
     def update(self):
-        (name, soc) = client.get_mode()
+        (name, soc) = self.client.get_mode()
         self._current_option = name
 
     def select_option(self, option: str):
