@@ -60,7 +60,7 @@ def setup_platform(
         BatteryChargeSensor(cache),
         BatteryDischargeSensor(cache),
         GeneratorUseSensor(cache),  # Adding the new generator sensor here
-        ])  
+        ])
 
 UPDATE_INTERVAL = 60
 class CachingClient(object):
@@ -157,7 +157,7 @@ class GridUseSensor(SensorEntity):
         This is the only method that should fetch new data for Home Assistant.
         """
         stats = self._cache.fetch()
-        self._attr_native_value = stats.current.grid_use
+        self._attr_native_value = stats.current.grid_use * -1
 
 class SolarProductionSensor(SensorEntity):
     """Shows the current state of charge of the battery"""
