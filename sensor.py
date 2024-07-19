@@ -32,6 +32,7 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Required(CONF_USERNAME): cv.string,
             vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
+            vol.Optional("nickname"): cv.string,
             }
         )
 
@@ -83,16 +84,26 @@ class CachingClient(object):
 
 # TODO(richo) Figure out how to have a singleton cache for the franklin data
 
-class FranklinBatterySensor(SensorEntity):
+class FranklinSensorEntity(SensorEntity):
+    def _set_attr_name(self, name, nickname):
+        if nickname is None:
+            attr_name = "FranklinWH {}".format(name)
+        else:
+            attr_name = "FranklinWH {} {}".format(nickname, name)
+        self._attr_name = attr_name
+
+
+
+class FranklinBatterySensor(FranklinSensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "FranklinWH State of Charge"
     _attr_native_unit_of_measurement = PERCENTAGE
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("State of Charge", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -102,16 +113,16 @@ class FranklinBatterySensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.battery_soc
 
-class HomeLoadSensor(SensorEntity):
+class HomeLoadSensor(FranklinSensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "FranklinWH Home Load"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Home Load", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -121,16 +132,16 @@ class HomeLoadSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.home_load
 
-class BatteryUseSensor(SensorEntity):
+class BatteryUseSensor(FranklinSensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "FranklinWH Battery Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Battery Use", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -140,16 +151,16 @@ class BatteryUseSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.battery_use * -1
 
-class GridUseSensor(SensorEntity):
+class GridUseSensor(FranklinSensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "FranklinWH Grid Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Grid Use", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -159,16 +170,16 @@ class GridUseSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.grid_use * -1
 
-class SolarProductionSensor(SensorEntity):
+class SolarProductionSensor(FranklinSensorEntity):
     """Shows the current state of charge of the battery"""
 
-    _attr_name = "FranklinWH Solar Production"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Solar Production", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -178,16 +189,16 @@ class SolarProductionSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.solar_production
 
-class BatteryChargeSensor(SensorEntity):
+class BatteryChargeSensor(FranklinSensorEntity):
     """Shows the charging stats of the battery"""
 
-    _attr_name = "FranklinWH Battery Charge"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Battery Charge", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -197,16 +208,16 @@ class BatteryChargeSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.totals.battery_charge
 
-class BatteryDischargeSensor(SensorEntity):
+class BatteryDischargeSensor(FranklinSensorEntity):
     """Shows the charging stats of the battery"""
 
-    _attr_name = "FranklinWH Battery Discharge"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Battery Discharge", nickname)
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -216,16 +227,16 @@ class BatteryDischargeSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.totals.battery_discharge
 
-class GeneratorUseSensor(SensorEntity):
+class GeneratorUseSensor(FranklinSensorEntity):
     """Shows the current power output of the generator"""
 
-    _attr_name = "FranklinWH Generator Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, nickname):
         self._cache = cache
+        self._set_attr_name("Generator Use", nickname)
 
     def update(self) -> None:
         stats = self._cache.fetch()

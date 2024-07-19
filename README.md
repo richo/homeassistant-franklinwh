@@ -67,5 +67,15 @@ switch:
     name: "FWH switch2"
 ```
 
+You can optionally add a `nickname` key if you have more than one FranklinWH install for example:
 
+```yaml
+sensor:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: 1005xxxxxxxxxxx
+    nickname: farm
+```
 
+Which then adds the nickname to all of the created entities, so `FranklinWH Energy Use` would become `FranklinWH farm Energy Use` for example.
