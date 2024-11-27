@@ -1,6 +1,6 @@
 {
-  "domain": "franklin_wh",
-  "name": "FranklinWH",
+  "domain": "franklinwh",
+  "name": "franklin",
   "codeowners": ["@richo"],
   "dependencies": [],
   "documentation": "https://github.com/richo/homeassistant-franklinwh/wiki",
