@@ -9,12 +9,9 @@ The most basic sensors are currently shown in this screenshot
 
 # Prerequisites
 
-You need an Access Token and your ID (serial number)
+You'll need an your ID (serial number)
 
 The ID is available from the franklin app under More -> Site Address. It's shown as your Serial Number.
-
-You can get the access token by running the login.py script bundled in the [franklinwh python
-module](https://github.com/richo/franklinwh-python)
 
 # Installation
 
