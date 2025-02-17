@@ -44,6 +44,10 @@ sensor:
     id: 1005xxxxxxxxxxx
 ```
 
+The ID is available from the franklin app under More -> Site Address. It's shown as your Serial Number.
+
+## Switches
+
 And to add switches, see below as an example, The switches in the example is the smart circuits that should be
 bound to that virtual switch.
 
@@ -64,5 +68,7 @@ switch:
     name: "FWH switch2"
 ```
 
+# Post Configuration
+Do a full restart of Home Assistant to enable the addon.
 
 
