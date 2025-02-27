@@ -29,6 +29,8 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             }
         )
 
+from .client import CachingClient, SingletonClient
+
 def setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
@@ -44,7 +46,7 @@ def setup_platform(
     switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
 
     fetcher = franklinwh.TokenFetcher(username, password)
-    client = franklinwh.Client(fetcher, gateway)
+    cache = franklinwh.Client(fetcher, gateway)
 
     add_entities([
         SmartCircuitSwitch(name, switches, client),
