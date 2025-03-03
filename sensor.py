@@ -59,7 +59,11 @@ def setup_platform(
         SolarProductionSensor(cache),
         BatteryChargeSensor(cache),
         BatteryDischargeSensor(cache),
-        GeneratorUseSensor(cache),  # Adding the new generator sensor here
+        GeneratorUseSensor(cache),
+        GridImportSensor(cache),
+        GridExportSensor(cache),
+        SolarEnergySensor(cache),
+        GeneratorUseSensor(cache),
         ])
 
 UPDATE_INTERVAL = 60
