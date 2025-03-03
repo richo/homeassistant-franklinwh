@@ -140,6 +140,44 @@ class GridUseSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.grid_use * -1
 
+class GridImportSensor(SensorEntity):
+    """Shows the amount of energy imported from the grid"""
+
+    _attr_name = "FranklinWH Grid Import"
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.totals.grid_import
+
+class GridExportSensor(SensorEntity):
+    """Shows the amount of energy exported to the grid"""
+
+    _attr_name = "FranklinWH Grid Export"
+    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.totals.grid_export
+
 class SolarProductionSensor(SensorEntity):
     """Shows the current solar production"""
 
