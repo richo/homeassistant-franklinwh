@@ -103,7 +103,7 @@ class FranklinBatterySensor(SensorEntity):
         self._attr_native_value = stats.current.battery_soc
 
 class HomeLoadSensor(SensorEntity):
-    """Shows the current state of charge of the battery"""
+    """Shows the current power use by the home load"""
 
     _attr_name = "FranklinWH Home Load"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
@@ -122,7 +122,7 @@ class HomeLoadSensor(SensorEntity):
         self._attr_native_value = stats.current.home_load
 
 class BatteryUseSensor(SensorEntity):
-    """Shows the current state of charge of the battery"""
+    """Shows the current charge or discharge from the battery"""
 
     _attr_name = "FranklinWH Battery Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
@@ -141,7 +141,7 @@ class BatteryUseSensor(SensorEntity):
         self._attr_native_value = stats.current.battery_use * -1
 
 class GridUseSensor(SensorEntity):
-    """Shows the current state of charge of the battery"""
+    """Shows the current import or export from the grid"""
 
     _attr_name = "FranklinWH Grid Use"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
@@ -160,7 +160,7 @@ class GridUseSensor(SensorEntity):
         self._attr_native_value = stats.current.grid_use * -1
 
 class SolarProductionSensor(SensorEntity):
-    """Shows the current state of charge of the battery"""
+    """Shows the current solar production"""
 
     _attr_name = "FranklinWH Solar Production"
     _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
