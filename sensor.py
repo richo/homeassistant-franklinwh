@@ -121,25 +121,6 @@ class HomeLoadSensor(SensorEntity):
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.home_load
 
-class BatteryUseSensor(SensorEntity):
-    """Shows the current charge or discharge from the battery"""
-
-    _attr_name = "FranklinWH Battery Use"
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache):
-        self._cache = cache
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        self._attr_native_value = stats.current.battery_use * -1
-
 class GridUseSensor(SensorEntity):
     """Shows the current import or export from the grid"""
 
@@ -177,6 +158,26 @@ class SolarProductionSensor(SensorEntity):
         """
         stats = self._cache.fetch()
         self._attr_native_value = stats.current.solar_production
+
+class BatteryUseSensor(SensorEntity):
+    """Shows the current charge or discharge from the battery"""
+
+    _attr_name = "FranklinWH Battery Use"
+    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.battery_use * -1
+
 
 class BatteryChargeSensor(SensorEntity):
     """Shows the charging stats of the battery"""
