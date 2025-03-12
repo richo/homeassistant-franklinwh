@@ -131,7 +131,7 @@ class HomeUseSensor(SensorEntity):
     _attr_name = "FranklinWH Generator Energy"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
@@ -165,7 +165,7 @@ class GridImportSensor(SensorEntity):
     _attr_name = "FranklinWH Grid Import"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
@@ -184,7 +184,7 @@ class GridExportSensor(SensorEntity):
     _attr_name = "FranklinWH Grid Export"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
@@ -222,7 +222,7 @@ class SolarEnergySensor(SensorEntity):
     _attr_name = "FranklinWH Solar Energy"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
@@ -257,7 +257,7 @@ class BatteryChargeSensor(SensorEntity):
     _attr_name = "FranklinWH Battery Charge"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
@@ -276,7 +276,7 @@ class BatteryDischargeSensor(SensorEntity):
     _attr_name = "FranklinWH Battery Discharge"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
@@ -310,7 +310,7 @@ class GeneratorEnergySensor(SensorEntity):
     _attr_name = "FranklinWH Generator Energy"
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.MEASUREMENT
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
     def __init__(self, cache):
         self._cache = cache
