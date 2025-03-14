@@ -63,7 +63,13 @@ def setup_platform(
         GridImportSensor(cache),
         GridExportSensor(cache),
         SolarEnergySensor(cache),
-        GeneratorUseSensor(cache),
+        Sw1LoadSensor(cache),
+        Sw1UseSensor(cache),
+        Sw2LoadSensor(cache),
+        Sw2UseSensor(cache),
+        V2LUseSensor(cache),
+        V2LExportSensor(cache),
+        V2LImportSensor(cache),
         ])
 
 UPDATE_INTERVAL = 60
@@ -318,3 +324,138 @@ class GeneratorEnergySensor(SensorEntity):
     def update(self) -> None:
         stats = self._cache.fetch()
         self._attr_native_value = stats.totals.generator
+
+class Sw1LoadSensor(SensorEntity):
+    """Shows the current power use by switch 1"""
+
+    _attr_name = "FranklinWH Switch 1 Load"
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.switch_1_load
+
+class Sw1UseSensor(SensorEntity):
+    """Shows the lifetime energy usage by switch 1"""
+
+    _attr_name = "FranklinWH Switch 1 Lifetime Use"
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.totals.switch_1_use
+
+
+class Sw2LoadSensor(SensorEntity):
+    """Shows the current power use by switch 2"""
+
+    _attr_name = "FranklinWH Switch 2 Load"
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.switch_2_load
+
+class Sw2UseSensor(SensorEntity):
+    """Shows the lifetime energy usage by switch 1"""
+
+    _attr_name = "FranklinWH Switch 2 Lifetime Use"
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.totals.switch_2_use
+
+
+class V2LUseSensor(SensorEntity):
+    """Shows the current power use by the car switch"""
+
+    _attr_name = "FranklinWH V2L Use"
+    _attr_native_unit_of_measurement = UnitOfPower.WATT
+    _attr_device_class = SensorDeviceClass.POWER
+    _attr_state_class = SensorStateClass.MEASUREMENT
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.sw_1_load
+
+class V2LExportSensor(SensorEntity):
+    """Shows the lifetime energy exported to the car switch"""
+
+    _attr_name = "FranklinWH V2L Export"
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.sw_1_load
+
+class V2LImportSensor(SensorEntity):
+    """Shows the lifetime energy exported to the car switch"""
+
+    _attr_name = "FranklinWH V2L Import"
+    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
+    _attr_device_class = SensorDeviceClass.ENERGY
+    _attr_state_class = SensorStateClass.TOTAL_INCREASING
+
+    def __init__(self, cache):
+        self._cache = cache
+
+    def update(self) -> None:
+        """Fetch new state data for the sensor.
+
+        This is the only method that should fetch new data for Home Assistant.
+        """
+        stats = self._cache.fetch()
+        self._attr_native_value = stats.current.sw_1_load
