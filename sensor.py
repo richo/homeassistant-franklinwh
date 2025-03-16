@@ -420,7 +420,7 @@ class V2LUseSensor(SensorEntity):
         This is the only method that should fetch new data for Home Assistant.
         """
         stats = self._cache.fetch()
-        self._attr_native_value = stats.current.sw_1_load
+        self._attr_native_value = stats.current.v2l_use
 
 class V2LExportSensor(SensorEntity):
     """Shows the lifetime energy exported to the car switch"""
@@ -439,7 +439,7 @@ class V2LExportSensor(SensorEntity):
         This is the only method that should fetch new data for Home Assistant.
         """
         stats = self._cache.fetch()
-        self._attr_native_value = stats.current.sw_1_load
+        self._attr_native_value = stats.totals.v2l_export
 
 class V2LImportSensor(SensorEntity):
     """Shows the lifetime energy exported to the car switch"""
@@ -458,4 +458,4 @@ class V2LImportSensor(SensorEntity):
         This is the only method that should fetch new data for Home Assistant.
         """
         stats = self._cache.fetch()
-        self._attr_native_value = stats.current.sw_1_load
+        self._attr_native_value = stats.totals.v2l_import
