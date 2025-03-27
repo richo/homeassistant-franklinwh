@@ -15,18 +15,15 @@ The ID is available from the franklin app under More -> Site Address. It's shown
 
 # Installation
 
+FranklinWH is moving to HACS! It should be simple enough, but I'm still figuring it out. So for now it's a bit of a mystery.
+
+# Installation (Non-HACS)
+
+Installing outside of HACS still works, although it's a little more involved than before.
 
 One way to do this is to use the web terminal from the [Advanced SSH & Web Terminal add-on](https://github.com/hassio-addons/addon-ssh)
 
-Within the terminal screen, paste the following command. This command clones the files into the correct folder on your system `<config_dir>/custom_components/franklin_wh/`
-```
-git clone https://github.com/richo/homeassistant-franklinwh config/custom_components/franklin_wh
-```
-
-If you see no errors similar to the follwing, you're done with the file installation
-![image](https://github.com/slackwilson/homeassistant-franklinwh/assets/109522242/8cf66ea9-3947-4f47-91aa-d6da1b2621e1)
-
-
+You'll need to clone the repo somewhere, and then symlink the `custom_components/franklin_wh` directory into `config/custom_components/franklin_wh`
 
 # Configuration
 
