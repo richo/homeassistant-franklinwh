@@ -91,7 +91,12 @@ class CachingClient(object):
                 self._fetch()
             return self.data
 
-# TODO(richo) Figure out how to have a singleton cache for the franklin data
+class ThreadedCachingClient(object):
+    def __init__(self, client):
+        self.thread = franklinwh.CachingClient(client)
+
+    def fetch(self):
+        self.thread.get_stats()
 
 class FranklinBatterySensor(SensorEntity):
     """Shows the current state of charge of the battery"""
