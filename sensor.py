@@ -93,7 +93,7 @@ class CachingClient(object):
 
 class ThreadedCachingClient(object):
     def __init__(self, client):
-        self.thread = franklinwh.CachingClient(client)
+        self.thread = franklinwh.CachingThread(client)
 
     def fetch(self):
         return self.thread.get_stats()
