@@ -49,7 +49,7 @@ def setup_platform(
 
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
-    cache = CachingClient(client.get_stats)
+    cache = ThreadedCachingClient(client)
 
     add_entities([
         FranklinBatterySensor(cache),
