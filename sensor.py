@@ -73,23 +73,6 @@ def setup_platform(
         ])
 
 UPDATE_INTERVAL = 60
-class CachingClient(object):
-    def __init__(self, update_func):
-        self.mutex = Lock()
-        self.update_func = update_func
-        self.last_fetched = 0
-        self.data = None
-
-    def _fetch(self):
-        self.data = self.update_func()
-
-    def fetch(self):
-        with self.mutex:
-            now = time.monotonic()
-            if now > self.last_fetched + UPDATE_INTERVAL:
-                self.last_fetched = now
-                self._fetch()
-            return self.data
 
 class ThreadedCachingClient(object):
     def __init__(self, client):
