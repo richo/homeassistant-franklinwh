@@ -50,6 +50,14 @@ def setup_platform(
         SmartCircuitSwitch(name, switches, client),
         ])
 
+class ThreadedCachingClient(object):
+    def __init__(self, client):
+        self.thread = franklinwh.CachingThread()
+        self.thread.start(client.get_smart_switch_state)
+
+    def fetch(self):
+        return self.thread.get_data()
+
 # Is it chill to have a switch in here? We'll see!
 class SmartCircuitSwitch(SwitchEntity):
     def __init__(self, name, switches, client):
@@ -57,9 +65,10 @@ class SmartCircuitSwitch(SwitchEntity):
         self.switches = switches
         self._attr_name = "FranklinWH {}".format(name)
         self.client = client
+        self.cache = ThreadCachingClient(client)
 
     def update(self):
-        state = self.client.get_smart_switch_state()
+        state = self.cache.fetch()
         values = list(map(lambda x: state[x], self.switches))
         if all(values):
             self._is_on = True

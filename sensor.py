@@ -76,10 +76,11 @@ UPDATE_INTERVAL = 60
 
 class ThreadedCachingClient(object):
     def __init__(self, client):
-        self.thread = franklinwh.CachingThread(client)
+        self.thread = franklinwh.CachingThread()
+        self.thread.start(client.get_stats)
 
     def fetch(self):
-        return self.thread.get_stats()
+        return self.thread.get_data()
 
 class FranklinBatterySensor(SensorEntity):
     """Shows the current state of charge of the battery"""
