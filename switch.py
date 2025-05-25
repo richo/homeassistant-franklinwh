@@ -65,7 +65,7 @@ class SmartCircuitSwitch(SwitchEntity):
         self.switches = switches
         self._attr_name = "FranklinWH {}".format(name)
         self.client = client
-        self.cache = ThreadCachingClient(client)
+        self.cache = ThreadedCachingClient(client)
 
     def update(self):
         state = self.cache.fetch()
