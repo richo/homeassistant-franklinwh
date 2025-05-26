@@ -69,6 +69,9 @@ class SmartCircuitSwitch(SwitchEntity):
 
     def update(self):
         state = self.cache.fetch()
+        if state is None:
+            # Cache hasn't populated yet
+            return
         values = list(map(lambda x: state[x], self.switches))
         if all(values):
             self._is_on = True
