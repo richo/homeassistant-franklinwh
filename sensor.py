@@ -32,6 +32,7 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Required(CONF_USERNAME): cv.string,
             vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
+            vol.Optional("multiple"): cv.bool,
             }
         )
 
@@ -46,30 +47,34 @@ def setup_platform(
     username: str = config[CONF_USERNAME]
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
+    if config["multiple"]:
+        unique_id = gateway
+    else:
+        unique_id = None
 
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
     cache = ThreadedCachingClient(client)
 
     add_entities([
-        FranklinBatterySensor(cache),
-        HomeLoadSensor(cache),
-        BatteryUseSensor(cache),
-        GridUseSensor(cache),
-        SolarProductionSensor(cache),
-        BatteryChargeSensor(cache),
-        BatteryDischargeSensor(cache),
-        GeneratorUseSensor(cache),
-        GridImportSensor(cache),
-        GridExportSensor(cache),
-        SolarEnergySensor(cache),
-        Sw1LoadSensor(cache),
-        Sw1UseSensor(cache),
-        Sw2LoadSensor(cache),
-        Sw2UseSensor(cache),
-        V2LUseSensor(cache),
-        V2LExportSensor(cache),
-        V2LImportSensor(cache),
+        FranklinBatterySensor(cache, unique_id),
+        HomeLoadSensor(cache, unique_id),
+        BatteryUseSensor(cache, unique_id),
+        GridUseSensor(cache, unique_id),
+        SolarProductionSensor(cache, unique_id),
+        BatteryChargeSensor(cache, unique_id),
+        BatteryDischargeSensor(cache, unique_id),
+        GeneratorUseSensor(cache, unique_id),
+        GridImportSensor(cache, unique_id),
+        GridExportSensor(cache, unique_id),
+        SolarEnergySensor(cache, unique_id),
+        Sw1LoadSensor(cache, unique_id),
+        Sw1UseSensor(cache, unique_id),
+        Sw2LoadSensor(cache, unique_id),
+        Sw2UseSensor(cache, unique_id),
+        V2LUseSensor(cache, unique_id),
+        V2LExportSensor(cache, unique_id),
+        V2LImportSensor(cache, unique_id),
         ])
 
 UPDATE_INTERVAL = 60
@@ -90,8 +95,10 @@ class FranklinBatterySensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.BATTERY
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -110,8 +117,10 @@ class HomeLoadSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -130,8 +139,10 @@ class HomeUseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         stats = self._cache.fetch()
@@ -146,8 +157,10 @@ class GridUseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -166,8 +179,10 @@ class GridImportSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -186,8 +201,10 @@ class GridExportSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -206,8 +223,10 @@ class SolarProductionSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -226,8 +245,10 @@ class SolarEnergySensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         stats = self._cache.fetch()
@@ -242,8 +263,10 @@ class BatteryUseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -263,8 +286,10 @@ class BatteryChargeSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -283,8 +308,10 @@ class BatteryDischargeSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -303,8 +330,10 @@ class GeneratorUseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         stats = self._cache.fetch()
@@ -319,8 +348,10 @@ class GeneratorEnergySensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         stats = self._cache.fetch()
@@ -335,8 +366,10 @@ class Sw1LoadSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -355,8 +388,10 @@ class Sw1UseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -376,8 +411,10 @@ class Sw2LoadSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -396,8 +433,10 @@ class Sw2UseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -417,8 +456,10 @@ class V2LUseSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.POWER
     _attr_state_class = SensorStateClass.MEASUREMENT
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -437,8 +478,10 @@ class V2LExportSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
@@ -457,8 +500,10 @@ class V2LImportSensor(SensorEntity):
     _attr_device_class = SensorDeviceClass.ENERGY
     _attr_state_class = SensorStateClass.TOTAL_INCREASING
 
-    def __init__(self, cache):
+    def __init__(self, cache, unique_id=None):
         self._cache = cache
+        if unique_id:
+            self._attr_unique_id = unique_id
 
     def update(self) -> None:
         """Fetch new state data for the sensor.
