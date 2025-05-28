@@ -22,4 +22,4 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 
 1. In Home Assistant, go to **HACS → Integrations**.
 2. Click the menu (⋮) and choose **Custom repositories**.
-3. Enter this repository URL:
+3. Enter this repository URL: https://github.com/richo/homeassistant-franklinwh.git
