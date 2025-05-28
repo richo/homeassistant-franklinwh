@@ -13,6 +13,6 @@ jobs:
     steps:
       - uses: "actions/checkout@v3"
       - name: HACS validation
-        uses: "hacs/action@main"
+        uses: "hacs/action@Use-.ref-in-version_to_download-if-force_branch-is-set"
         with:
           category: "integration"
