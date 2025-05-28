@@ -1,3 +1,8 @@
 {
-   "name": "FranklinWH"
+  "name": "FranklinWH",
+  "content_in_root": false,
+  "domains": ["franklin_wh"],
+  "country": "US",
+  "zip_release": false,
+  "filename": "custom_components/franklin_wh/__init__.py"
 }
