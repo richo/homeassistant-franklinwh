@@ -99,4 +99,6 @@ Contributions are welcome! Please fork the repository and open a pull request:
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+This project is dual-licensed under the [MIT License](LICENSE) and the [Apache License 2.0](LICENSE).
+
+You may choose either license when using or contributing to this project.
