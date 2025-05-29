@@ -69,6 +69,7 @@ switch:
  id: "100xxxxxxxxxxxx"
  switches: [1, 2]
  name: "FWH switch2"
+```
 
 After updating your configuration, restart Home Assistant to apply the changes.
 
