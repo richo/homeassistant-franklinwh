@@ -1,7 +1,7 @@
 {
   "name": "FranklinWH",
   "content_in_root": true,
-  "domains": ["franklin_wh"],
+  "domain": "franklin_wh",
   "zip_release": false,
   "render_readme": true,
   "render_icon": true
