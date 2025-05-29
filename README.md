@@ -42,11 +42,9 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 
 This integration currently requires **manual YAML configuration** in your `configuration.yaml` file.
 
-> 💡 For security, store your password in `secrets.yaml` instead of writing it directly in your config.
->
-> You can find your Gateway ID / Serial Number in the FranklinWH mobile app under:
-> Settings → Device Info → SN
-
+> 💡 For security, store your password in `secrets.yaml` instead of writing it directly in your config.  
+> 🔎 You can find your Gateway ID / Serial Number in the FranklinWH mobile app under:  
+> **Settings → Device Info → SN**
 
 ### Configuration Example
 
@@ -57,22 +55,22 @@ sensor:
  password: !secret franklinwh_password
  id: "100xxxxxxxxxxxx"
 
-### Switch Configuration Example
-
 switch:
-  - platform: franklin_wh
-    username: "email@domain.com"
-    password: !secret franklinwh_password
-    id: "100xxxxxxxxxxxx"
-    switches: [3]
-    name: "FWH switch1"
+- platform: franklin_wh
+ username: "email@domain.com"
+ password: !secret franklinwh_password
+ id: "100xxxxxxxxxxxx"
+ switches: [3]
+ name: "FWH switch1"
 
-  - platform: franklin_wh
-    username: "email@domain.com"
-    password: !secret franklinwh_password
-    id: "100xxxxxxxxxxxx"
-    switches: [1, 2]
-    name: "FWH switch2"
+- platform: franklin_wh
+ username: "email@domain.com"
+ password: !secret franklinwh_password
+ id: "100xxxxxxxxxxxx"
+ switches: [1, 2]
+ name: "FWH switch2"
+
+After updating your configuration, restart Home Assistant to apply the changes.
 
 ## Available Entities
 
@@ -98,26 +96,19 @@ switch:
 | FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
 | FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
 
----
+Troubleshooting
+	•	If no entities appear, confirm your username, password, and gateway ID.
+	•	Check that FranklinWH cloud services are online.
+	•	Review logs via Settings → System → Logs for errors containing franklin_wh.
 
-## Troubleshooting
-
-- If no entities appear, confirm your username, password, and gateway ID.
-- Check that FranklinWH cloud services are online.
-- Review logs via **Settings → System → Logs** for errors containing `franklin_wh`.
-
----
-
-## Contributing
+Contributing
 
 Contributions are welcome! Please fork the repository and open a pull request:
 
-👉 [https://github.com/richo/homeassistant-franklinwh.git](https://github.com/richo/homeassistant-franklinwh.git)
+👉 https://github.com/richo/homeassistant-franklinwh
 
----
+License
 
-## License
-
-This project is dual-licensed under the [MIT License](LICENSE) and the [Apache License 2.0](LICENSE).
+This project is dual-licensed under the MIT License and the Apache License 2.0.
 
 You may choose either license when using or contributing to this project.
