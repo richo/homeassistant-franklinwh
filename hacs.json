@@ -2,7 +2,5 @@
   "name": "FranklinWH",
   "content_in_root": true,
   "domain": "franklin_wh",
-  "zip_release": false,
-  "render_readme": true,
-  "render_icon": true
+  "zip_release": false
 }
