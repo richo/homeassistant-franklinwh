@@ -26,7 +26,6 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 1. In Home Assistant, go to **HACS → Integrations**.
 2. Click the menu (⋮) → **Custom repositories**.
 3. Add this repository URL: https://github.com/richo/homeassistant-franklinwh.git
-
 4. Choose category **Integration** and click **Add**.
 5. Install the **FranklinWH** integration from the list.
 6. Restart Home Assistant.
@@ -41,19 +40,39 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 
 ## Configuration
 
-After installation, go to:
+This integration currently requires **manual YAML configuration** in your `configuration.yaml` file.
 
-**Settings → Devices & Services → Add Integration**
+> 💡 For security, store your password in `secrets.yaml` instead of writing it directly in your config.
+>
+> You can find your Gateway ID / Serial Number in the FranklinWH mobile app under:
+> Settings → Device Info → SN
 
-Search for **FranklinWH**, then enter:
 
-- Your FranklinWH username
-- Password
-- Gateway ID
+### 🔌 Sensor Configuration Example
 
-Once added, the integration will create sensor entities based on live FranklinWH data.
+```yaml
+sensor:
+- platform: franklin_wh
+ username: "email@domain.com"
+ password: !secret franklinwh_password
+ id: "100xxxxxxxxxxxx"
 
----
+### Switch Configuration Example
+
+switch:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    switches: [3]
+    name: "FWH switch1"
+
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    switches: [1, 2]
+    name: "FWH switch2"
 
 ## Available Entities
 
