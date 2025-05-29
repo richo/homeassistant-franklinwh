@@ -48,7 +48,7 @@ This integration currently requires **manual YAML configuration** in your `confi
 > Settings → Device Info → SN
 
 
-### 🔌 Sensor Configuration Example
+### Configuration Example
 
 ```yaml
 sensor:
