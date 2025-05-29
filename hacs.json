@@ -3,7 +3,6 @@
   "content_in_root": true,
   "domains": ["franklin_wh"],
   "zip_release": false,
-  "filename": "custom_components/franklin_wh/__init__.py"
   "render_readme": true,
   "render_icon": true
 }
