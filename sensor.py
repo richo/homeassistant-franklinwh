@@ -103,7 +103,7 @@ class FranklinBatterySensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " State of Charge"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_state_of_charge"
 
     def update(self) -> None:
@@ -126,7 +126,7 @@ class HomeLoadSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Home Load"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_home_load"
 
     def update(self) -> None:
@@ -149,7 +149,7 @@ class HomeUseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Generator Energy"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_generator_energy"
 
     def update(self) -> None:
@@ -168,7 +168,7 @@ class GridUseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Grid Use"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_grid_use"
 
     def update(self) -> None:
@@ -191,7 +191,7 @@ class GridImportSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Grid Import"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_grid_import"
 
     def update(self) -> None:
@@ -214,7 +214,7 @@ class GridExportSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Grid Export"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_grid_export"
 
     def update(self) -> None:
@@ -237,7 +237,7 @@ class SolarProductionSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Solar Production"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_solar_production"
 
     def update(self) -> None:
@@ -260,7 +260,7 @@ class SolarEnergySensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Solar Energy"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_solar_energy"
 
     def update(self) -> None:
@@ -279,7 +279,7 @@ class BatteryUseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Battery Use"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_batter_use"
 
     def update(self) -> None:
@@ -303,7 +303,7 @@ class BatteryChargeSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Battery Charge"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_battery_charge"
 
     def update(self) -> None:
@@ -326,7 +326,7 @@ class BatteryDischargeSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Battery Discharge"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_battery_discharge"
 
     def update(self) -> None:
@@ -349,7 +349,7 @@ class GeneratorUseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Generator Use"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_generator_use"
 
     def update(self) -> None:
@@ -368,7 +368,7 @@ class GeneratorEnergySensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Generator Energy"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_generator_energy"
 
     def update(self) -> None:
@@ -387,7 +387,7 @@ class Sw1LoadSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Switch 1 Load"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_switch_1_load"
 
     def update(self) -> None:
@@ -410,7 +410,7 @@ class Sw1UseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Switch 1 Lifetime Use"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "switch_1_lifetime_use"
 
     def update(self) -> None:
@@ -434,7 +434,7 @@ class Sw2LoadSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Switch 2 Load"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_switch_2_load"
 
     def update(self) -> None:
@@ -457,7 +457,7 @@ class Sw2UseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " Switch 2 Lifetime Use"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_switch_2_lifetime_use"
 
     def update(self) -> None:
@@ -481,7 +481,7 @@ class V2LUseSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " V2L Use"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_v2l_use"
 
     def update(self) -> None:
@@ -504,7 +504,7 @@ class V2LExportSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " V2L Export"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_v2l_export"
 
     def update(self) -> None:
@@ -527,7 +527,7 @@ class V2LImportSensor(SensorEntity):
         self._cache = cache
         self._attr_name = prefix + " V2L Import"
         if unique_id:
-            self.__attr_has_entity_name = True
+            self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_v2l_import"
 
     def update(self) -> None:
