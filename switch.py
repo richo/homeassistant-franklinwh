@@ -26,6 +26,8 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Required(CONF_ID): cv.string,
             vol.Required(CONF_NAME): cv.string,
             vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
+            vol.Optional("use_sn"): cv.boolean,
+            vol.Optional("prefix"): cv.string,
             }
         )
 
@@ -40,6 +42,14 @@ def setup_platform(
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
     name: str = config[CONF_NAME]
+    if config["use_sn"]:
+        unique_id = gateway
+    else:
+        unique_id = None
+    if config["prefix"]:
+        prefix = config["prefix"]
+    else:
+        prefix = "FranklinWH"
 
     switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
 
@@ -47,7 +57,7 @@ def setup_platform(
     client = franklinwh.Client(fetcher, gateway)
 
     add_entities([
-        SmartCircuitSwitch(name, switches, client),
+        SmartCircuitSwitch(prefix, unique_id, name, switches, client),
         ])
 
 class ThreadedCachingClient(object):
@@ -60,12 +70,15 @@ class ThreadedCachingClient(object):
 
 # Is it chill to have a switch in here? We'll see!
 class SmartCircuitSwitch(SwitchEntity):
-    def __init__(self, name, switches, client):
+    def __init__(self, prefix, unique_id, name, switches, client):
         self._is_on = False
         self.switches = switches
-        self._attr_name = "FranklinWH {}".format(name)
+        self._attr_name = "{} {}".format(prefix, name)
         self.client = client
         self.cache = ThreadedCachingClient(client)
+        if unique_id:
+            self._attr_has_entity_name = True
+            self._attr_unique_id = unique_id + "_" + name
 
     def update(self):
         state = self.cache.fetch()
