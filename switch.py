@@ -26,8 +26,8 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Required(CONF_ID): cv.string,
             vol.Required(CONF_NAME): cv.string,
             vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
-            vol.Optional("use_sn"): cv.boolean,
-            vol.Optional("prefix"): cv.string,
+            vol.Optional("use_sn", default=False): cv.boolean,
+            vol.Optional("prefix", default=False): cv.string,
             }
         )
 
@@ -42,11 +42,15 @@ def setup_platform(
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
     name: str = config[CONF_NAME]
-    if config["use_sn"]:
+
+    # TODO(richo) why does it string the default value
+    if config["use_sn"] and config["use_sn"] != "False":
         unique_id = gateway
     else:
         unique_id = None
-    if config["prefix"]:
+
+    # TODO(richo) why does it string the default value
+    if config["prefix"] and config["prefix"] != "False":
         prefix = config["prefix"]
     else:
         prefix = "FranklinWH"
