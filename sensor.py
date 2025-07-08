@@ -32,8 +32,8 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Required(CONF_USERNAME): cv.string,
             vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
-            vol.Optional("use_sn"): cv.boolean,
-            vol.Optional("prefix"): cv.string,
+            vol.Optional("use_sn", default=False): cv.boolean,
+            vol.Optional("prefix", default=None): cv.string,
             }
         )
 
@@ -52,6 +52,7 @@ def setup_platform(
         unique_id = gateway
     else:
         unique_id = None
+
     if config["prefix"]:
         prefix = config["prefix"]
     else:
