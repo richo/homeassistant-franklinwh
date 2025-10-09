@@ -33,7 +33,7 @@ from homeassistant.helpers.update_coordinator import (
 )
 
 _LOGGER = logging.getLogger(__name__)
-UPDATE_INTERVAL = timedelta(seconds=10)
+DEFAULT_UPDATE_INTERVAL = 30
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
@@ -42,9 +42,9 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Required(CONF_ID): cv.string,
             vol.Optional("use_sn", default=False): cv.boolean,
             vol.Optional("prefix", default=False): cv.string,
+            vol.Optional("update_interval", default=DEFAULT_UPDATE_INTERVAL): cv.time_period,
             }
         )
-
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -56,6 +56,7 @@ async def async_setup_platform(
     username: str = config[CONF_USERNAME]
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
+    update_interval: timedelta = config["update_interval"]
 
     # TODO(richo) why does it string the default value
     if config["use_sn"] and config["use_sn"] != "False":
@@ -83,19 +84,12 @@ async def async_setup_platform(
         _LOGGER,
         name="franklinwh",
         update_method=_update_data,
+        update_interval=update_interval,
+        always_update=False
     )
 
-    async def _refresh_data(_):
-        """Refresh data from the coordinator."""
-        _LOGGER.debug("Requesting FranklinWH coordinator refresh")
-        await coordinator.async_refresh()
-
-    # We do things this way (instead of just providing the update interval
-    # to the coordinator) so that we can poll reliably every UPDATE_INTERVAL
-    # instead of having UPDATE_INTERVAL _between_ polls (so this method
-    # disregards the time taken to do the poll itself).
-    async_track_time_interval(hass, _refresh_data, UPDATE_INTERVAL)
-
+    # Initial fetch (If we don't kick this off manually, we'll get unavailable
+    # sensors until the first scheduled update).
     await coordinator.async_refresh()
 
     async_add_entities([
@@ -402,8 +396,6 @@ class V2LExportSensor(FranklinSensor):
 
 class V2LImportSensor(FranklinSensor):
     """Shows the lifetime energy exported to the car switch"""
-
-
 
     _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY
