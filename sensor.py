@@ -96,7 +96,7 @@ async def async_setup_platform(
     # disregards the time taken to do the poll itself).
     async_track_time_interval(hass, _refresh_data, UPDATE_INTERVAL)
 
-    await coordinator.async_config_entry_first_refresh()
+    await coordinator.async_refresh()
 
     async_add_entities([
         FranklinBatterySensor(coordinator, prefix, unique_id),
