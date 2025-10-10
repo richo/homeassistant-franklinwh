@@ -36,9 +36,12 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     gateway_id = data[CONF_GATEWAY_ID]
     
     try:
-        # Create token fetcher and client
-        token_fetcher = franklinwh.TokenFetcher(username, password)
-        client = franklinwh.Client(token_fetcher, gateway_id)
+        # Create token fetcher and client in executor to avoid blocking
+        def create_client():
+            token_fetcher = franklinwh.TokenFetcher(username, password)
+            return franklinwh.Client(token_fetcher, gateway_id)
+        
+        client = await hass.async_add_executor_job(create_client)
         
         # Try to fetch data to validate credentials and gateway
         stats = await hass.async_add_executor_job(client.get_stats)

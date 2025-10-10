@@ -52,9 +52,11 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
         self.use_local_api = use_local_api
         self.local_host = local_host
         
-        # Initialize the FranklinWH client
-        self.token_fetcher = TokenFetcher(username, password)
-        self.client = Client(self.token_fetcher, gateway_id)
+        # Store credentials for lazy client initialization
+        # Client will be created in executor during first update to avoid blocking
+        self.token_fetcher = None
+        self.client = None
+        self._client_lock = False
         
         # Set update interval based on API type
         update_interval = (
@@ -71,6 +73,20 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
     async def _async_update_data(self) -> FranklinWHData:
         """Fetch data from FranklinWH API."""
         try:
+            # Initialize client on first run (in executor to avoid blocking)
+            if self.client is None and not self._client_lock:
+                self._client_lock = True
+                try:
+                    def create_client():
+                        token_fetcher = TokenFetcher(self.username, self.password)
+                        return Client(token_fetcher, self.gateway_id)
+                    
+                    self.client = await self.hass.async_add_executor_job(create_client)
+                    self.token_fetcher = self.client.fetcher
+                except Exception as err:
+                    self._client_lock = False
+                    raise UpdateFailed(f"Failed to initialize client: {err}") from err
+            
             # Fetch stats
             stats = await self.hass.async_add_executor_job(self.client.get_stats)
             
