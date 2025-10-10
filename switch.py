@@ -1,118 +1,120 @@
-#!/usr/bin/env python
+"""Switch platform for FranklinWH integration."""
+from __future__ import annotations
 
-import franklinwh
+import logging
+from typing import Any
 
-from homeassistant.components.switch import (
-    SwitchEntity,
-    PLATFORM_SCHEMA as PARENT_PLATFORM_SCHEMA,
-)
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
-from homeassistant.const import (
-        CONF_USERNAME,
-        CONF_PASSWORD,
-        CONF_ID,
-        CONF_NAME,
-        CONF_SWITCHES,
-        )
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
-PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
-        {
-            vol.Required(CONF_USERNAME): cv.string,
-            vol.Required(CONF_PASSWORD): cv.string,
-            vol.Required(CONF_ID): cv.string,
-            vol.Required(CONF_NAME): cv.string,
-            vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
-            vol.Optional("use_sn", default=False): cv.boolean,
-            vol.Optional("prefix", default=False): cv.string,
-            }
-        )
+from .const import CONF_GATEWAY_ID, DOMAIN, MANUFACTURER, MODEL
+from .coordinator import FranklinWHCoordinator
 
-def setup_platform(
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up the sensor platform."""
-    username: str = config[CONF_USERNAME]
-    password: str = config[CONF_PASSWORD]
-    gateway: str = config[CONF_ID]
-    name: str = config[CONF_NAME]
+    """Set up FranklinWH switch based on a config entry."""
+    coordinator: FranklinWHCoordinator = hass.data[DOMAIN][entry.entry_id]
+    
+    # Create switch entities for each smart circuit (1-3)
+    entities = [
+        FranklinWHSmartSwitch(coordinator, entry, switch_id)
+        for switch_id in range(3)
+    ]
+    
+    async_add_entities(entities)
 
-    # TODO(richo) why does it string the default value
-    if config["use_sn"] and config["use_sn"] != "False":
-        unique_id = gateway
-    else:
-        unique_id = None
 
-    # TODO(richo) why does it string the default value
-    if config["prefix"] and config["prefix"] != "False":
-        prefix = config["prefix"]
-    else:
-        prefix = "FranklinWH"
+class FranklinWHSmartSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEntity):
+    """Representation of a FranklinWH smart circuit switch."""
 
-    switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
+    _attr_has_entity_name = True
 
-    fetcher = franklinwh.TokenFetcher(username, password)
-    client = franklinwh.Client(fetcher, gateway)
-
-    add_entities([
-        SmartCircuitSwitch(prefix, unique_id, name, switches, client),
-        ])
-
-class ThreadedCachingClient(object):
-    def __init__(self, client):
-        self.thread = franklinwh.CachingThread()
-        self.thread.start(client.get_smart_switch_state)
-
-    def fetch(self):
-        return self.thread.get_data()
-
-# Is it chill to have a switch in here? We'll see!
-class SmartCircuitSwitch(SwitchEntity):
-    def __init__(self, prefix, unique_id, name, switches, client):
-        self._is_on = False
-        self.switches = switches
-        self._attr_name = "{} {}".format(prefix, name)
-        self.client = client
-        self.cache = ThreadedCachingClient(client)
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_" + name
-
-    def update(self):
-        state = self.cache.fetch()
-        if state is None:
-            # Cache hasn't populated yet
-            return
-        values = list(map(lambda x: state[x], self.switches))
-        if all(values):
-            self._is_on = True
-        elif all(map(lambda x: x is False, values)):
-            self._is_on = False
-        else:
-            # Something's fucky!
-            self._is_on = None
+    def __init__(
+        self,
+        coordinator: FranklinWHCoordinator,
+        entry: ConfigEntry,
+        switch_id: int,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(coordinator)
+        
+        self._switch_id = switch_id
+        self._switch_index = switch_id  # 0-indexed for API
+        gateway_id = entry.data[CONF_GATEWAY_ID]
+        
+        # Set unique ID
+        self._attr_unique_id = f"{gateway_id}_switch_{switch_id + 1}"
+        
+        # Set name
+        self._attr_name = f"Switch {switch_id + 1}"
+        
+        # Set device info
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, gateway_id)},
+            name=f"FranklinWH {gateway_id[-6:]}",
+            manufacturer=MANUFACTURER,
+            model=MODEL,
+            sw_version=entry.data.get("sw_version"),
+        )
 
     @property
-    def is_on(self):
-        """If the switch is currently on or off."""
-        return self._is_on
+    def is_on(self) -> bool | None:
+        """Return true if the switch is on."""
+        if (
+            self.coordinator.data is None
+            or self.coordinator.data.switch_state is None
+        ):
+            return None
+        
+        try:
+            return self.coordinator.data.switch_state[self._switch_index]
+        except (IndexError, TypeError):
+            return None
 
-    def turn_on(self, **kwargs):
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and self.coordinator.data.switch_state is not None
+        )
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
         switches = [None, None, None]
-        for i in self.switches:
-            switches[i] = True
-        self.client.set_smart_switch_state(switches)
+        switches[self._switch_index] = True
+        
+        try:
+            await self.coordinator.async_set_switch_state(switches)
+        except Exception as err:
+            _LOGGER.error("Failed to turn on switch %d: %s", self._switch_id + 1, err)
+            raise
 
-    def turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
         switches = [None, None, None]
-        for i in self.switches:
-            switches[i] = False
-        self.client.set_smart_switch_state(switches)
+        switches[self._switch_index] = False
+        
+        try:
+            await self.coordinator.async_set_switch_state(switches)
+        except Exception as err:
+            _LOGGER.error("Failed to turn off switch %d: %s", self._switch_id + 1, err)
+            raise
+
+    @property
+    def icon(self) -> str:
+        """Return the icon for the switch."""
+        if self.is_on:
+            return "mdi:electric-switch-closed"
+        return "mdi:electric-switch"

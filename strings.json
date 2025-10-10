@@ -1,0 +1,90 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "FranklinWH Setup",
+        "description": "Connect your FranklinWH energy storage system to Home Assistant.",
+        "data": {
+          "username": "Email Address",
+          "password": "Password",
+          "gateway_id": "Gateway ID (Serial Number)",
+          "use_local_api": "Use Local API (experimental)",
+          "local_host": "Local Host IP Address"
+        },
+        "data_description": {
+          "gateway_id": "Find your Gateway ID in the FranklinWH app under More → Site Address → SN",
+          "use_local_api": "Enable if you want to use local communication instead of cloud (requires local API support)",
+          "local_host": "IP address of your FranklinWH gateway on your local network"
+        }
+      },
+      "reauth_confirm": {
+        "title": "Re-authenticate FranklinWH",
+        "description": "The credentials for your FranklinWH account need to be updated.",
+        "data": {
+          "username": "Email Address",
+          "password": "Password"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Failed to connect to FranklinWH. Please check your credentials and network connection.",
+      "invalid_auth": "Invalid username or password. Please check your credentials.",
+      "invalid_gateway": "Invalid Gateway ID. Please check your Gateway ID in the FranklinWH app.",
+      "timeout": "Connection timeout. Please check your network connection.",
+      "unknown": "An unexpected error occurred. Please try again."
+    },
+    "abort": {
+      "already_configured": "This FranklinWH gateway is already configured.",
+      "reauth_successful": "Re-authentication successful!"
+    }
+  },
+  "options": {
+    "step": {
+      "init": {
+        "title": "FranklinWH Options",
+        "description": "Configure options for your FranklinWH integration.",
+        "data": {
+          "scan_interval": "Update interval (seconds)",
+          "use_local_api": "Use Local API (experimental)",
+          "local_host": "Local Host IP Address"
+        },
+        "data_description": {
+          "scan_interval": "How often to poll for updates (minimum 10 seconds for cloud, 5 for local)"
+        }
+      }
+    }
+  },
+  "selector": {
+    "operation_mode": {
+      "options": {
+        "self_use": "Self Use",
+        "backup": "Backup",
+        "time_of_use": "Time of Use",
+        "clean_backup": "Clean Backup"
+      }
+    }
+  },
+  "services": {
+    "set_operation_mode": {
+      "name": "Set Operation Mode",
+      "description": "Set the operation mode of the FranklinWH system.",
+      "fields": {
+        "mode": {
+          "name": "Mode",
+          "description": "The operation mode to set."
+        }
+      }
+    },
+    "set_battery_reserve": {
+      "name": "Set Battery Reserve",
+      "description": "Set the minimum battery reserve percentage.",
+      "fields": {
+        "reserve_percent": {
+          "name": "Reserve Percentage",
+          "description": "Minimum battery charge to maintain (0-100%)."
+        }
+      }
+    }
+  }
+}
+

@@ -1,0 +1,39 @@
+# Services for FranklinWH integration
+
+set_operation_mode:
+  name: Set Operation Mode
+  description: Set the operation mode of the FranklinWH system.
+  fields:
+    mode:
+      name: Mode
+      description: The operation mode to set.
+      required: true
+      example: "self_use"
+      selector:
+        select:
+          options:
+            - label: "Self Use"
+              value: "self_use"
+            - label: "Backup"
+              value: "backup"
+            - label: "Time of Use"
+              value: "time_of_use"
+            - label: "Clean Backup"
+              value: "clean_backup"
+
+set_battery_reserve:
+  name: Set Battery Reserve
+  description: Set the minimum battery reserve percentage.
+  fields:
+    reserve_percent:
+      name: Reserve Percentage
+      description: Minimum battery charge to maintain (0-100%).
+      required: true
+      example: 20
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+

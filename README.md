@@ -2,114 +2,301 @@
 
 [![hacs_badge](https://img.shields.io/badge/HACS-Custom-blue.svg?style=for-the-badge)](https://github.com/hacs/integration)
 
-This is a custom integration for [Home Assistant](https://www.home-assistant.io/) that provides monitoring for FranklinWH home energy storage systems.
+This is a modern custom integration for [Home Assistant](https://www.home-assistant.io/) that provides comprehensive monitoring and control for FranklinWH home energy storage systems.
 
 > ⚠️ This project is unofficial and not affiliated with FranklinWH.
 
 ---
 
-## Features
+## ✨ Features
 
-- Live battery status (SoC, charging/discharging)
-- Solar production and energy generation
-- Grid import/export monitoring
-- Generator and home load insights
-- Switch load and usage tracking
-- Support for V2L (Vehicle-to-Load) data
+### Monitoring
+- 📊 Live battery status (State of Charge, charging/discharging power)
+- ☀️ Solar production and energy generation tracking
+- 🔌 Grid import/export monitoring with totals
+- ⚡ Generator production and energy insights
+- 🏠 Home load power monitoring
+- 🔀 Smart circuit switch monitoring (Switches 1-3)
+- 🚗 V2L (Vehicle-to-Load) data support
+
+### Control
+- 🎛️ Individual smart circuit switch control
+- ⚙️ Operation mode selection (planned)
+- 🔋 Battery reserve setting (planned)
+
+### Modern Features
+- 🎨 **Config Flow**: Easy setup through the Home Assistant UI
+- 🔄 **DataUpdateCoordinator**: Efficient polling with minimal API calls
+- 📱 **Device Registry**: All entities grouped under one device
+- 🔍 **Diagnostics**: Built-in debugging support
+- 🌐 **Local API Support**: Experimental local communication (when available)
+- 🛠️ **Services**: Custom services for advanced control
 
 ---
 
-## Installation
+## 📦 Installation
 
 ### Via HACS (Recommended)
 
 1. In Home Assistant, go to **HACS → Integrations**.
 2. Click the menu (⋮) → **Custom repositories**.
-3. Add this repository URL: https://github.com/richo/homeassistant-franklinwh.git
+3. Add this repository URL: `https://github.com/richo/homeassistant-franklinwh`
 4. Choose category **Integration** and click **Add**.
-5. Install the **FranklinWH** integration from the list.
+5. Search for **FranklinWH** in HACS and click **Download**.
 6. Restart Home Assistant.
 
-### Manual Installation (Advanced)
+### Manual Installation
 
-1. Download this repository as a ZIP.
-2. Extract it to your Home Assistant `custom_components/franklin_wh/` directory.
+1. Download this repository as a ZIP file.
+2. Extract the contents to your Home Assistant `custom_components/franklin_wh/` directory.
 3. Restart Home Assistant.
 
 ---
 
-## Configuration
+## ⚙️ Configuration
 
-This integration currently requires **manual YAML configuration** in your `configuration.yaml` file.
+### Easy Setup (Config Flow - Recommended)
 
-> 💡 For security, store your password in `secrets.yaml` instead of writing it directly in your config.  
-> 🔎 You can find your Gateway ID / Serial Number in the FranklinWH mobile app under:  
-> **Settings → Device Info → SN**
+1. Go to **Settings → Devices & Services**.
+2. Click **+ Add Integration**.
+3. Search for **FranklinWH**.
+4. Enter your credentials:
+   - **Email Address**: Your FranklinWH account email
+   - **Password**: Your FranklinWH account password
+   - **Gateway ID**: Find this in the FranklinWH app under **More → Site Address → SN**
+   - **Use Local API** (optional): Enable for experimental local communication
+   - **Local Host** (optional): IP address of your FranklinWH gateway
 
-### Configuration Example
+5. Click **Submit** and your devices will be added automatically!
+
+### Legacy YAML Configuration (Deprecated)
+
+> ⚠️ **Note**: YAML configuration is deprecated and will be removed in a future version. Please migrate to Config Flow setup above.
+
+<details>
+<summary>Click to expand legacy YAML configuration</summary>
 
 ```yaml
+# This is the old configuration method - NOT RECOMMENDED
+# Please use Config Flow instead
+
 sensor:
-- platform: franklin_wh
- username: "email@domain.com"
- password: !secret franklinwh_password
- id: "100xxxxxxxxxxxx"
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
 
 switch:
-- platform: franklin_wh
- username: "email@domain.com"
- password: !secret franklinwh_password
- id: "100xxxxxxxxxxxx"
- switches: [3]
- name: "FWH switch1"
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    switches: [1, 2, 3]
+    name: "All Switches"
+```
+</details>
 
-- platform: franklin_wh
- username: "email@domain.com"
- password: !secret franklinwh_password
- id: "100xxxxxxxxxxxx"
- switches: [1, 2]
- name: "FWH switch2"
+---
+
+## 📊 Available Entities
+
+After setup, all entities will be organized under a single **FranklinWH** device:
+
+### Sensors
+
+| Entity | Description | Unit |
+|--------|-------------|------|
+| **State of Charge** | Battery state of charge | % |
+| **Battery Use** | Battery charging/discharging rate (negative = charging) | kW |
+| **Battery Charge** | Total energy charged to battery | kWh |
+| **Battery Discharge** | Total energy discharged from battery | kWh |
+| **Home Load** | Instantaneous home power consumption | kW |
+| **Grid Use** | Net grid power (negative = importing, positive = exporting) | kW |
+| **Grid Import** | Total energy imported from grid | kWh |
+| **Grid Export** | Total energy exported to grid | kWh |
+| **Solar Production** | Instantaneous solar power generation | kW |
+| **Solar Energy** | Total solar energy produced | kWh |
+| **Generator Use** | Generator power output (live) | kW |
+| **Generator Energy** | Total generator energy produced | kWh |
+| **Switch 1 Load** | Power draw on Switch 1 | W |
+| **Switch 1 Lifetime Use** | Total energy used by Switch 1 | Wh |
+| **Switch 2 Load** | Power draw on Switch 2 | W |
+| **Switch 2 Lifetime Use** | Total energy used by Switch 2 | Wh |
+| **V2L Use** | Power via Vehicle-to-Load | W |
+| **V2L Import** | Total energy drawn from V2L | Wh |
+| **V2L Export** | Total energy delivered to V2L | Wh |
+
+### Switches
+
+| Entity | Description |
+|--------|-------------|
+| **Switch 1** | Control smart circuit 1 |
+| **Switch 2** | Control smart circuit 2 |
+| **Switch 3** | Control smart circuit 3 |
+
+---
+
+## 🔧 Services
+
+The integration provides custom services for advanced control:
+
+### `franklin_wh.set_operation_mode`
+
+Set the operation mode of your FranklinWH system.
+
+**Parameters:**
+- `mode`: Operation mode (`self_use`, `backup`, `time_of_use`, `clean_backup`)
+
+**Example:**
+```yaml
+service: franklin_wh.set_operation_mode
+data:
+  mode: self_use
 ```
 
-After updating your configuration, restart Home Assistant to apply the changes.
+> ⚠️ **Note**: This service requires API support that may not be available yet. It's a placeholder for future functionality.
 
-## Available Entities
+### `franklin_wh.set_battery_reserve`
 
-| Entity Name                          | Description                               | Unit      |
-|-------------------------------------|-------------------------------------------|-----------|
-| FranklinWH State of Charge          | Battery state of charge                   | %         |
-| FranklinWH Battery Use              | Battery charging/discharging rate         | kW        |
-| FranklinWH Battery Charge           | Total energy charged to battery           | kWh       |
-| FranklinWH Battery Discharge        | Total energy discharged from battery      | kWh       |
-| FranklinWH Home Load                | Instantaneous home power use              | kW        |
-| FranklinWH Grid Use                 | Net grid power usage                      | kW        |
-| FranklinWH Grid Import              | Total energy imported from grid           | kWh       |
-| FranklinWH Grid Export              | Total energy exported to grid             | kWh       |
-| FranklinWH Solar Production         | Instantaneous solar power                 | kW        |
-| FranklinWH Solar Energy             | Total solar energy produced               | kWh       |
-| FranklinWH Generator Use            | Generator power output (live)             | kW        |
-| FranklinWH Generator Energy         | Total generator energy                    | kWh       |
-| FranklinWH Switch 1 Load            | Power draw on Switch 1                    | W         |
-| FranklinWH Switch 1 Lifetime Use    | Total energy used by Switch 1             | Wh        |
-| FranklinWH Switch 2 Load            | Power draw on Switch 2                    | W         |
-| FranklinWH Switch 2 Lifetime Use    | Total energy used by Switch 2             | Wh        |
-| FranklinWH V2L Use                  | Power use via Vehicle-to-Load             | W         |
-| FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
-| FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
+Set the minimum battery reserve percentage.
 
-Troubleshooting
-	•	If no entities appear, confirm your username, password, and gateway ID.
-	•	Check that FranklinWH cloud services are online.
-	•	Review logs via Settings → System → Logs for errors containing franklin_wh.
+**Parameters:**
+- `reserve_percent`: Minimum battery charge to maintain (0-100)
 
-Contributing
+**Example:**
+```yaml
+service: franklin_wh.set_battery_reserve
+data:
+  reserve_percent: 20
+```
+
+> ⚠️ **Note**: This service requires API support that may not be available yet. It's a placeholder for future functionality.
+
+---
+
+## 🔋 Energy Dashboard Integration
+
+All energy sensors are compatible with Home Assistant's **Energy Dashboard**:
+
+1. Go to **Settings → Dashboards → Energy**
+2. Configure your energy sources:
+   - **Solar Production**: Use "Solar Energy" sensor
+   - **Battery**: Use "Battery Charge" and "Battery Discharge" sensors
+   - **Grid**: Use "Grid Import" and "Grid Export" sensors
+
+---
+
+## 🐛 Troubleshooting
+
+### No entities appear after setup
+1. Check **Settings → System → Logs** for errors containing `franklin_wh`
+2. Verify your credentials are correct
+3. Confirm your Gateway ID is correct (found in FranklinWH app)
+4. Ensure FranklinWH cloud services are online
+
+### Authentication errors
+1. Try re-authenticating:
+   - Go to **Settings → Devices & Services**
+   - Find your FranklinWH integration
+   - Click **Configure** → **Re-authenticate**
+2. Verify your password is correct
+
+### Entities show as "Unavailable"
+1. Check your internet connection
+2. Verify the FranklinWH cloud service is accessible
+3. Check the integration logs for API errors
+4. Try reloading the integration
+
+### Diagnostics
+To get detailed diagnostic information:
+1. Go to **Settings → Devices & Services**
+2. Find your FranklinWH integration
+3. Click the device, then click **Download Diagnostics**
+4. Attach the diagnostics file when reporting issues
+
+---
+
+## 🔍 Local API Support (Experimental)
+
+This integration includes experimental support for local API communication. Currently, the FranklinWH library primarily uses cloud polling, but local API support is being explored.
+
+**To enable local API (when available):**
+1. Enable "Use Local API" during setup
+2. Enter your gateway's local IP address
+3. The integration will attempt local communication with faster polling (10 seconds vs 60 seconds)
+
+> 📝 **Note**: Local API support depends on the underlying `franklinwh` Python library and may not be fully functional yet. This is an area of active development.
+
+---
+
+## 🤝 Contributing
 
 Contributions are welcome! Please fork the repository and open a pull request:
 
-👉 https://github.com/richo/homeassistant-franklinwh
+👉 [https://github.com/richo/homeassistant-franklinwh](https://github.com/richo/homeassistant-franklinwh)
 
-License
+### Development Setup
 
-This project is dual-licensed under the MIT License and the Apache License 2.0.
+1. Clone the repository
+2. Install development dependencies
+3. Use VS Code with Dev Containers for a consistent environment
+4. Test your changes thoroughly before submitting
+
+### Reporting Issues
+
+When reporting issues, please:
+1. Download diagnostics from your integration
+2. Include Home Assistant and integration versions
+3. Provide relevant log entries
+4. Describe steps to reproduce
+
+---
+
+## 📋 Changelog
+
+### Version 1.0.0 (Current)
+- ✨ **NEW**: Modern config flow for UI-based setup
+- ✨ **NEW**: DataUpdateCoordinator for efficient API polling
+- ✨ **NEW**: Device registry integration
+- ✨ **NEW**: Diagnostics support
+- ✨ **NEW**: Experimental local API support
+- ✨ **NEW**: Custom services (placeholders for future features)
+- 🐛 **FIXED**: All typos and copy-paste errors in entity IDs
+- 🐛 **FIXED**: Consolidated caching logic
+- 🐛 **FIXED**: Improved error handling
+- ♻️ **REFACTOR**: Complete code modernization
+- ♻️ **REFACTOR**: Better entity organization
+
+### Version 0.4.1 (Legacy)
+- Initial YAML-based platform configuration
+- Basic sensor and switch support
+
+---
+
+## 📄 License
+
+This project is dual-licensed under:
+- **MIT License**
+- **Apache License 2.0**
 
 You may choose either license when using or contributing to this project.
+
+---
+
+## 🙏 Acknowledgments
+
+- Thanks to the Home Assistant community
+- Built on the [`franklinwh-python`](https://github.com/richo/franklinwh-python) library
+- Special thanks to all contributors
+
+---
+
+## ⚠️ Disclaimer
+
+This integration is not affiliated with, endorsed by, or supported by FranklinWH. Use at your own risk. The developers are not responsible for any damage to your system or equipment.
+
+---
+
+**Enjoy your FranklinWH integration! 🎉**
+
+For support, please open an issue on [GitHub](https://github.com/richo/homeassistant-franklinwh/issues).

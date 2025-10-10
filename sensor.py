@@ -1,544 +1,262 @@
-"""Platform for sensor integration."""
+"""Sensor platform for FranklinWH integration."""
 from __future__ import annotations
-from threading import Lock
-import time
 
-import franklinwh
-
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
+from collections.abc import Callable
+from dataclasses import dataclass
+import logging
+from typing import Any
 
 from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA as PARENT_PLATFORM_SCHEMA,
     SensorDeviceClass,
     SensorEntity,
+    SensorEntityDescription,
     SensorStateClass,
 )
-from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import (
-        UnitOfPower,
-        UnitOfEnergy,
-        PERCENTAGE,
-        CONF_USERNAME,
-        CONF_PASSWORD,
-        CONF_ID,
-        )
-
+    PERCENTAGE,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
-        {
-            vol.Required(CONF_USERNAME): cv.string,
-            vol.Required(CONF_PASSWORD): cv.string,
-            vol.Required(CONF_ID): cv.string,
-            vol.Optional("use_sn", default=False): cv.boolean,
-            vol.Optional("prefix", default=False): cv.string,
-            }
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import CONF_GATEWAY_ID, DOMAIN, MANUFACTURER, MODEL
+from .coordinator import FranklinWHCoordinator, FranklinWHData
+
+_LOGGER = logging.getLogger(__name__)
+
+
+@dataclass
+class FranklinWHSensorEntityDescription(SensorEntityDescription):
+    """Describes FranklinWH sensor entity."""
+
+    value_fn: Callable[[FranklinWHData], float | int | None] | None = None
+
+
+SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
+    FranklinWHSensorEntityDescription(
+        key="battery_soc",
+        name="State of Charge",
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=SensorDeviceClass.BATTERY,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.battery_soc if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="battery_use",
+        name="Battery Use",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.battery_use * -1 if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="battery_charge",
+        name="Battery Charge",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.battery_charge if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="battery_discharge",
+        name="Battery Discharge",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.battery_discharge if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="home_load",
+        name="Home Load",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.home_load if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="grid_use",
+        name="Grid Use",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.grid_use * -1 if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="grid_import",
+        name="Grid Import",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.grid_import if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="grid_export",
+        name="Grid Export",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.grid_export if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="solar_production",
+        name="Solar Production",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.solar_production if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="solar_energy",
+        name="Solar Energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.solar if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="generator_use",
+        name="Generator Use",
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.generator_production if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="generator_energy",
+        name="Generator Energy",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.generator if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="switch_1_load",
+        name="Switch 1 Load",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.switch_1_load if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="switch_1_lifetime_use",
+        name="Switch 1 Lifetime Use",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.switch_1_use if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="switch_2_load",
+        name="Switch 2 Load",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.switch_2_load if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="switch_2_lifetime_use",
+        name="Switch 2 Lifetime Use",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.switch_2_use if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="v2l_use",
+        name="V2L Use",
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        state_class=SensorStateClass.MEASUREMENT,
+        value_fn=lambda data: data.stats.current.v2l_use if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="v2l_export",
+        name="V2L Export",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.v2l_export if data.stats else None,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="v2l_import",
+        name="V2L Import",
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: data.stats.totals.v2l_import if data.stats else None,
+    ),
+)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up FranklinWH sensor based on a config entry."""
+    coordinator: FranklinWHCoordinator = hass.data[DOMAIN][entry.entry_id]
+    
+    entities = [
+        FranklinWHSensorEntity(coordinator, description, entry)
+        for description in SENSOR_TYPES
+    ]
+    
+    async_add_entities(entities)
+
+
+class FranklinWHSensorEntity(CoordinatorEntity[FranklinWHCoordinator], SensorEntity):
+    """Representation of a FranklinWH sensor."""
+
+    entity_description: FranklinWHSensorEntityDescription
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: FranklinWHCoordinator,
+        description: FranklinWHSensorEntityDescription,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the sensor."""
+        super().__init__(coordinator)
+        self.entity_description = description
+        
+        gateway_id = entry.data[CONF_GATEWAY_ID]
+        
+        # Set unique ID
+        self._attr_unique_id = f"{gateway_id}_{description.key}"
+        
+        # Set device info
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, gateway_id)},
+            name=f"FranklinWH {gateway_id[-6:]}",
+            manufacturer=MANUFACTURER,
+            model=MODEL,
+            sw_version=entry.data.get("sw_version"),
         )
 
-
-def setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None
-) -> None:
-    """Set up the sensor platform."""
-    username: str = config[CONF_USERNAME]
-    password: str = config[CONF_PASSWORD]
-    gateway: str = config[CONF_ID]
-
-    # TODO(richo) why does it string the default value
-    if config["use_sn"] and config["use_sn"] != "False":
-        unique_id = gateway
-    else:
-        unique_id = None
-
-    # TODO(richo) why does it string the default value
-    if config["prefix"] and config["prefix"] != "False":
-        prefix = config["prefix"]
-    else:
-        prefix = "FranklinWH"
-
-    fetcher = franklinwh.TokenFetcher(username, password)
-    client = franklinwh.Client(fetcher, gateway)
-    cache = ThreadedCachingClient(client)
-
-    add_entities([
-        FranklinBatterySensor(cache, prefix, unique_id),
-        HomeLoadSensor(cache, prefix, unique_id),
-        BatteryUseSensor(cache, prefix, unique_id),
-        GridUseSensor(cache, prefix, unique_id),
-        SolarProductionSensor(cache, prefix, unique_id),
-        BatteryChargeSensor(cache, prefix, unique_id),
-        BatteryDischargeSensor(cache, prefix, unique_id),
-        GeneratorUseSensor(cache, prefix, unique_id),
-        GridImportSensor(cache, prefix, unique_id),
-        GridExportSensor(cache, prefix, unique_id),
-        SolarEnergySensor(cache, prefix, unique_id),
-        Sw1LoadSensor(cache, prefix, unique_id),
-        Sw1UseSensor(cache, prefix, unique_id),
-        Sw2LoadSensor(cache, prefix, unique_id),
-        Sw2UseSensor(cache, prefix, unique_id),
-        V2LUseSensor(cache, prefix, unique_id),
-        V2LExportSensor(cache, prefix, unique_id),
-        V2LImportSensor(cache, prefix, unique_id),
-        ])
-
-UPDATE_INTERVAL = 60
-
-class ThreadedCachingClient(object):
-    def __init__(self, client):
-        self.thread = franklinwh.CachingThread()
-        self.thread.start(client.get_stats)
-
-    def fetch(self):
-        return self.thread.get_data()
-
-class FranklinBatterySensor(SensorEntity):
-    """Shows the current state of charge of the battery"""
-
-    _attr_native_unit_of_measurement = PERCENTAGE
-    _attr_device_class = SensorDeviceClass.BATTERY
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " State of Charge"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_state_of_charge"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.battery_soc
-
-class HomeLoadSensor(SensorEntity):
-    """Shows the current power use by the home load"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Home Load"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_home_load"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.home_load
-
-class HomeUseSensor(SensorEntity):
-    """Shows the total energy used by the home"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Generator Energy"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_generator_energy"
-
-    def update(self) -> None:
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.home_use
-
-class GridUseSensor(SensorEntity):
-    """Shows the current import or export from the grid"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Grid Use"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_grid_use"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.grid_use * -1
-
-class GridImportSensor(SensorEntity):
-    """Shows the amount of energy imported from the grid"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Grid Import"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_grid_import"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.grid_import
-
-class GridExportSensor(SensorEntity):
-    """Shows the amount of energy exported to the grid"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Grid Export"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_grid_export"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.grid_export
-
-class SolarProductionSensor(SensorEntity):
-    """Shows the current solar production"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Solar Production"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_solar_production"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.solar_production
-
-class SolarEnergySensor(SensorEntity):
-    """Shows the energy generated by solar"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Solar Energy"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_solar_energy"
-
-    def update(self) -> None:
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.solar
-
-class BatteryUseSensor(SensorEntity):
-    """Shows the current charge or discharge from the battery"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Battery Use"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_batter_use"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.battery_use * -1
-
-
-class BatteryChargeSensor(SensorEntity):
-    """Shows the charging stats of the battery"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Battery Charge"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_battery_charge"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.battery_charge
-
-class BatteryDischargeSensor(SensorEntity):
-    """Shows the charging stats of the battery"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Battery Discharge"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_battery_discharge"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.battery_discharge
-
-class GeneratorUseSensor(SensorEntity):
-    """Shows the current power output of the generator"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.KILO_WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Generator Use"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_generator_use"
-
-    def update(self) -> None:
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.generator_production
-
-class GeneratorEnergySensor(SensorEntity):
-    """Shows the energy imported from the generator"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Generator Energy"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_generator_energy"
-
-    def update(self) -> None:
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.generator
-
-class Sw1LoadSensor(SensorEntity):
-    """Shows the current power use by switch 1"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Switch 1 Load"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_switch_1_load"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.switch_1_load
-
-class Sw1UseSensor(SensorEntity):
-    """Shows the lifetime energy usage by switch 1"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Switch 1 Lifetime Use"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "switch_1_lifetime_use"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.switch_1_use
-
-
-class Sw2LoadSensor(SensorEntity):
-    """Shows the current power use by switch 2"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Switch 2 Load"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_switch_2_load"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.switch_2_load
-
-class Sw2UseSensor(SensorEntity):
-    """Shows the lifetime energy usage by switch 1"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " Switch 2 Lifetime Use"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_switch_2_lifetime_use"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.switch_2_use
-
-
-class V2LUseSensor(SensorEntity):
-    """Shows the current power use by the car switch"""
-
-    _attr_native_unit_of_measurement = UnitOfPower.WATT
-    _attr_device_class = SensorDeviceClass.POWER
-    _attr_state_class = SensorStateClass.MEASUREMENT
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " V2L Use"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_v2l_use"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.current.v2l_use
-
-class V2LExportSensor(SensorEntity):
-    """Shows the lifetime energy exported to the car switch"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " V2L Export"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_v2l_export"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.v2l_export
-
-class V2LImportSensor(SensorEntity):
-    """Shows the lifetime energy exported to the car switch"""
-
-    _attr_native_unit_of_measurement = UnitOfEnergy.WATT_HOUR
-    _attr_device_class = SensorDeviceClass.ENERGY
-    _attr_state_class = SensorStateClass.TOTAL_INCREASING
-
-    def __init__(self, cache, prefix, unique_id):
-        self._cache = cache
-        self._attr_name = prefix + " V2L Import"
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_v2l_import"
-
-    def update(self) -> None:
-        """Fetch new state data for the sensor.
-
-        This is the only method that should fetch new data for Home Assistant.
-        """
-        stats = self._cache.fetch()
-        if stats is not None:
-            self._attr_native_value = stats.totals.v2l_import
+    @property
+    def native_value(self) -> float | int | None:
+        """Return the state of the sensor."""
+        if self.entity_description.value_fn is None:
+            return None
+        
+        try:
+            return self.entity_description.value_fn(self.coordinator.data)
+        except (AttributeError, TypeError, KeyError) as err:
+            _LOGGER.debug(
+                "Error getting value for %s: %s", self.entity_description.key, err
+            )
+            return None
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and self.coordinator.data.stats is not None
+        )
