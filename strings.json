@@ -27,10 +27,10 @@
       }
     },
     "error": {
-      "cannot_connect": "Failed to connect to FranklinWH. Please check your credentials and network connection.",
+      "cannot_connect": "Failed to connect to FranklinWH. Gateway may be offline or unreachable. Please verify: 1) Gateway is powered on, 2) Gateway ID is correct, 3) Network connection is working.",
       "invalid_auth": "Invalid username or password. Please check your credentials.",
-      "invalid_gateway": "Invalid Gateway ID. Please check your Gateway ID in the FranklinWH app.",
-      "timeout": "Connection timeout. Please check your network connection.",
+      "invalid_gateway": "Invalid Gateway ID. Please check your Gateway ID in the FranklinWH app under More → Site Address → SN.",
+      "timeout": "Gateway device timeout. Please verify the gateway is online and connected to the network.",
       "unknown": "An unexpected error occurred. Please try again."
     },
     "abort": {

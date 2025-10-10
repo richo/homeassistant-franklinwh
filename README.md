@@ -207,6 +207,21 @@ All energy sensors are compatible with Home Assistant's **Energy Dashboard**:
 3. Check the integration logs for API errors
 4. Try reloading the integration
 
+### Gateway Timeout Errors
+If you see "Device response timed out":
+1. **Verify gateway is online**: Check the FranklinWH mobile app
+2. **Check Gateway ID**: Must be exact SN from app (More → Site Address → SN)
+3. **FranklinWH cloud status**: Service may be temporarily down
+4. **Disable local API**: If enabled, switch back to cloud polling
+5. **Wait and retry**: Gateway may be rebooting or updating
+
+### Local API Issues
+The local API is **experimental** and may not work:
+- Most users should use **cloud polling** (default)
+- Local API requires the gateway to support local communication
+- If local API times out, disable it and use cloud polling
+- Local API support depends on gateway firmware version
+
 ### Diagnostics
 To get detailed diagnostic information:
 1. Go to **Settings → Devices & Services**

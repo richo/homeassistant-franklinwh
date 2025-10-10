@@ -56,9 +56,24 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
         }
     except Exception as err:
         _LOGGER.exception("Unexpected exception: %s", err)
-        # Check if it's an authentication-related error
-        if "auth" in str(err).lower() or "token" in str(err).lower() or "401" in str(err):
+        error_str = str(err).lower()
+        
+        # Check for specific error types
+        if "timeout" in error_str or "timed out" in error_str:
+            _LOGGER.error("Device timeout - gateway may be offline or unreachable")
+            raise CannotConnect(
+                "Gateway device timed out. Please verify:\n"
+                "1. Gateway is powered on and connected to network\n"
+                "2. Gateway ID is correct\n"
+                "3. FranklinWH cloud services are online"
+            ) from err
+        
+        if "auth" in error_str or "token" in error_str or "401" in error_str:
             raise InvalidAuth from err
+        
+        if "gateway" in error_str or "device" in error_str:
+            raise InvalidGateway from err
+        
         raise CannotConnect from err
 
 
