@@ -144,10 +144,10 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
     FranklinWHSensorEntityDescription(
         key="switch_1_lifetime_use",
         name="Switch 1 Lifetime Use",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.switch_1_use if data.stats else None,
+        value_fn=lambda data: (data.stats.totals.switch_1_use / 1000) if data.stats else None,
     ),
     FranklinWHSensorEntityDescription(
         key="switch_2_load",
@@ -160,10 +160,10 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
     FranklinWHSensorEntityDescription(
         key="switch_2_lifetime_use",
         name="Switch 2 Lifetime Use",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.switch_2_use if data.stats else None,
+        value_fn=lambda data: (data.stats.totals.switch_2_use / 1000) if data.stats else None,
     ),
     FranklinWHSensorEntityDescription(
         key="v2l_use",
@@ -176,18 +176,18 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
     FranklinWHSensorEntityDescription(
         key="v2l_export",
         name="V2L Export",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.v2l_export if data.stats else None,
+        value_fn=lambda data: (data.stats.totals.v2l_export / 1000) if data.stats else None,
     ),
     FranklinWHSensorEntityDescription(
         key="v2l_import",
         name="V2L Import",
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.v2l_import if data.stats else None,
+        value_fn=lambda data: (data.stats.totals.v2l_import / 1000) if data.stats else None,
     ),
 )
 

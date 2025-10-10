@@ -119,12 +119,12 @@ After setup, all entities will be organized under a single **FranklinWH** device
 | **Generator Use** | Generator power output (live) | kW |
 | **Generator Energy** | Total generator energy produced | kWh |
 | **Switch 1 Load** | Power draw on Switch 1 | W |
-| **Switch 1 Lifetime Use** | Total energy used by Switch 1 | Wh |
+| **Switch 1 Lifetime Use** | Total energy used by Switch 1 | kWh |
 | **Switch 2 Load** | Power draw on Switch 2 | W |
-| **Switch 2 Lifetime Use** | Total energy used by Switch 2 | Wh |
+| **Switch 2 Lifetime Use** | Total energy used by Switch 2 | kWh |
 | **V2L Use** | Power via Vehicle-to-Load | W |
-| **V2L Import** | Total energy drawn from V2L | Wh |
-| **V2L Export** | Total energy delivered to V2L | Wh |
+| **V2L Import** | Total energy drawn from V2L | kWh |
+| **V2L Export** | Total energy delivered to V2L | kWh |
 
 ### Switches
 
