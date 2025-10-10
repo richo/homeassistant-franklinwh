@@ -3,18 +3,14 @@
     "step": {
       "user": {
         "title": "FranklinWH Setup",
-        "description": "Connect your FranklinWH energy storage system to Home Assistant.",
+        "description": "Connect your FranklinWH energy storage system to Home Assistant. Note: Local API is currently not functional - only cloud polling is available.",
         "data": {
           "username": "Email Address",
           "password": "Password",
-          "gateway_id": "Gateway ID (Serial Number)",
-          "use_local_api": "Use Local API (experimental)",
-          "local_host": "Local Host IP Address"
+          "gateway_id": "Gateway ID (Serial Number)"
         },
         "data_description": {
-          "gateway_id": "Find your Gateway ID in the FranklinWH app under More → Site Address → SN",
-          "use_local_api": "Enable if you want to use local communication instead of cloud (requires local API support)",
-          "local_host": "IP address of your FranklinWH gateway on your local network"
+          "gateway_id": "Find your Gateway ID in the FranklinWH app under More → Site Address → SN. This is the complete serial number (usually starts with 100)."
         }
       },
       "reauth_confirm": {
@@ -42,14 +38,12 @@
     "step": {
       "init": {
         "title": "FranklinWH Options",
-        "description": "Configure options for your FranklinWH integration.",
+        "description": "Configure polling interval for your FranklinWH integration. Local API options are disabled as they are not yet functional.",
         "data": {
-          "scan_interval": "Update interval (seconds)",
-          "use_local_api": "Use Local API (experimental)",
-          "local_host": "Local Host IP Address"
+          "scan_interval": "Update interval (seconds)"
         },
         "data_description": {
-          "scan_interval": "How often to poll for updates (minimum 10 seconds for cloud, 5 for local)"
+          "scan_interval": "How often to poll for updates from the cloud (minimum 30 seconds, default 60 seconds)"
         }
       }
     }

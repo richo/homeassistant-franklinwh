@@ -108,13 +108,15 @@ class FranklinWHConfigFlow(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=info["title"], data=user_input)
 
         # Build the data schema
+        # Note: Local API fields are shown but not functional yet
         data_schema = vol.Schema(
             {
                 vol.Required(CONF_USERNAME): cv.string,
                 vol.Required(CONF_PASSWORD): cv.string,
                 vol.Required(CONF_GATEWAY_ID): cv.string,
-                vol.Optional(CONF_USE_LOCAL_API, default=False): cv.boolean,
-                vol.Optional(CONF_LOCAL_HOST): cv.string,
+                # Local API not functional yet - fields shown but ignored
+                # vol.Optional(CONF_USE_LOCAL_API, default=False): cv.boolean,
+                # vol.Optional(CONF_LOCAL_HOST): cv.string,
             }
         )
 
@@ -192,20 +194,19 @@ class FranklinWHOptionsFlow(config_entries.OptionsFlow):
             return self.async_create_entry(title="", data=user_input)
 
         # Get current values
-        use_local_api = self.config_entry.data.get(CONF_USE_LOCAL_API, False)
         scan_interval = self.config_entry.options.get(
             "scan_interval",
-            DEFAULT_LOCAL_SCAN_INTERVAL if use_local_api else DEFAULT_SCAN_INTERVAL,
+            DEFAULT_SCAN_INTERVAL,
         )
-        local_host = self.config_entry.data.get(CONF_LOCAL_HOST, "")
 
         data_schema = vol.Schema(
             {
                 vol.Optional("scan_interval", default=scan_interval): vol.All(
-                    vol.Coerce(int), vol.Range(min=5, max=3600)
+                    vol.Coerce(int), vol.Range(min=30, max=3600)
                 ),
-                vol.Optional(CONF_USE_LOCAL_API, default=use_local_api): cv.boolean,
-                vol.Optional(CONF_LOCAL_HOST, default=local_host): cv.string,
+                # Local API options disabled - not functional yet
+                # vol.Optional(CONF_USE_LOCAL_API, default=False): cv.boolean,
+                # vol.Optional(CONF_LOCAL_HOST, default=""): cv.string,
             }
         )
 
