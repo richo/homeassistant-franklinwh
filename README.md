@@ -110,6 +110,7 @@ After setup, all entities will be organized under a single **FranklinWH** device
 | **Battery Use** | Battery charging/discharging rate (negative = charging) | kW |
 | **Battery Charge** | Total energy charged to battery | kWh |
 | **Battery Discharge** | Total energy discharged from battery | kWh |
+| **Battery Charge from Grid** | Energy charged to battery from grid (calculated) | kWh |
 | **Home Load** | Instantaneous home power consumption | kW |
 | **Grid Use** | Net grid power (negative = importing, positive = exporting) | kW |
 | **Grid Import** | Total energy imported from grid | kWh |
@@ -182,6 +183,7 @@ All energy sensors are compatible with Home Assistant's **Energy Dashboard**:
 2. Configure your energy sources:
    - **Solar Production**: Use "Solar Energy" sensor
    - **Battery**: Use "Battery Charge" and "Battery Discharge" sensors
+   - **Battery from Grid**: Use "Battery Charge from Grid" sensor (calculated)
    - **Grid**: Use "Grid Import" and "Grid Export" sensors
 
 ---

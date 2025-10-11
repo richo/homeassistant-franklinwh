@@ -70,6 +70,19 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         value_fn=lambda data: data.stats.totals.battery_discharge if data.stats else None,
     ),
     FranklinWHSensorEntityDescription(
+        key="battery_charge_from_grid",
+        name="Battery Charge from Grid",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda data: (
+            # Battery charged from grid = Total battery charge - Solar energy
+            # (assuming all solar goes to battery first, excess goes to home/grid)
+            max(0, (data.stats.totals.battery_charge or 0) - (data.stats.totals.solar or 0))
+            if data.stats else None
+        ),
+    ),
+    FranklinWHSensorEntityDescription(
         key="home_load",
         name="Home Load",
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
