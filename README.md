@@ -273,7 +273,11 @@ When reporting issues, please:
 
 ## 📋 Changelog
 
-### Version 1.0.4 (Current)
+### Version 1.0.5 (Current)
+- 🐛 **CRITICAL FIX**: Corrected franklinwh package requirement to 0.4.1 (was incorrectly set to 0.5.0 which doesn't exist)
+- 🐛 **FIXED**: "Requirements for franklin_wh not found" error on setup
+
+### Version 1.0.4
 - ✨ **NEW**: Grid Connection switch for controlling grid connectivity
 - ✨ **NEW**: Battery Charge from Grid calculated sensor
 - 🐛 **FIXED**: Entities no longer flicker unavailable during temporary failures
