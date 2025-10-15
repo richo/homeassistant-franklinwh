@@ -273,7 +273,11 @@ When reporting issues, please:
 
 ## 📋 Changelog
 
-### Version 1.0.5 (Current)
+### Version 1.0.6 (Current)
+- 🐛 **CRITICAL FIX**: Fixed Stats class import from franklinwh.client module
+- 🐛 **FIXED**: "cannot import name 'Stats'" ImportError on setup
+
+### Version 1.0.5
 - 🐛 **CRITICAL FIX**: Corrected franklinwh package requirement to 0.4.1 (was incorrectly set to 0.5.0 which doesn't exist)
 - 🐛 **FIXED**: "Requirements for franklin_wh not found" error on setup
 
