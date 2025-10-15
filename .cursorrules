@@ -1,0 +1,228 @@
+# FranklinWH Home Assistant Integration - AI Agent Instructions
+
+## Project Overview
+
+This is a **Home Assistant custom integration** for FranklinWH home energy storage systems. It provides monitoring and control capabilities for FranklinWH batteries, solar, grid, and smart switches.
+
+### Key Information
+- **Author**: Joshua Seidel (@JoshuaSeidel)
+- **Development**: Complete rewrite using Anthropic Claude Sonnet 4.5
+- **Original**: Inspired by @richo's homeassistant-franklinwh
+- **Library**: Uses franklinwh-python by @richo (version 0.4.1 from PyPI)
+- **License**: Dual licensed (MIT / Apache 2.0)
+- **Repository**: https://github.com/JoshuaSeidel/homeassistant-franklinwh
+
+## Project Structure
+
+### Core Files
+- `__init__.py` - Integration setup, coordinator initialization, service registration
+- `config_flow.py` - UI-based configuration flow for setup
+- `coordinator.py` - DataUpdateCoordinator for API polling and data management
+- `sensor.py` - All sensor entities (battery, solar, grid, home load, etc.)
+- `switch.py` - Smart circuit switches (Switch 1, 2, 3)
+- `const.py` - Constants and configuration keys
+- `manifest.json` - Integration metadata and requirements
+- `strings.json` / `translations/en.json` - Localization
+
+### Key Design Patterns
+1. **Modern HA Architecture**: Uses DataUpdateCoordinator, device registry, config flow
+2. **Async Operations**: All blocking I/O wrapped in `async_add_executor_job`
+3. **Error Resilience**: 3-failure grace period before marking unavailable
+4. **Energy Dashboard**: All energy sensors compatible with HA Energy Dashboard
+
+## Critical Library Constraints
+
+### franklinwh Library Version: 0.4.1 (PyPI)
+This is the ONLY version available on PyPI. The GitHub repo has newer features, but they're not published.
+
+#### Available in 0.4.1:
+- `Client` class (main API client)
+- `TokenFetcher` class (authentication)
+- `Mode` class (operation modes)
+- `Stats` class (in `franklinwh.client`, not exported in `__init__.py`)
+- `get_stats()` method
+- `get_smart_switch_state()` method
+- `set_smart_switch_state()` method
+
+#### NOT Available in 0.4.1:
+- `AccessoryType` enum
+- `GridStatus` enum
+- `get_accessories()` method
+- `set_grid_status()` method
+- Grid Connection control features
+
+**IMPORTANT**: Always verify imports against PyPI version 0.4.1, not GitHub master branch.
+
+### Correct Import Pattern
+```python
+# CORRECT - These work with 0.4.1
+from franklinwh import Client, TokenFetcher, Mode
+from franklinwh.client import Stats  # Not exported in __init__.py
+
+# WRONG - These don't exist in 0.4.1
+from franklinwh import Stats  # Not exported
+from franklinwh import AccessoryType, GridStatus  # Don't exist
+```
+
+## API Data Structure
+
+### Stats Object
+```python
+stats.current:
+    - battery_soc: float (0-100)
+    - battery_use: float (kW, positive=discharge, negative=charge)
+    - home_load: float (kW)
+    - grid_use: float (kW, positive=export, negative=import)
+    - solar_production: float (kW)
+    - generator_production: float (kW)
+    - switch_1_load: float (W)
+    - switch_2_load: float (W)
+    - v2l_use: float (W)
+
+stats.totals:
+    - battery_charge: float (kWh)
+    - battery_discharge: float (kWh)
+    - grid_import: float (kWh)
+    - grid_export: float (kWh)
+    - solar: float (kWh)
+    - generator: float (kWh)
+    - switch_1_use: float (Wh) - convert to kWh by /1000
+    - switch_2_use: float (Wh) - convert to kWh by /1000
+    - v2l_import: float (Wh) - convert to kWh by /1000
+    - v2l_export: float (Wh) - convert to kWh by /1000
+```
+
+## Common Development Tasks
+
+### Adding a New Sensor
+1. Add to `SENSOR_TYPES` tuple in `sensor.py`
+2. Use `FranklinWHSensorEntityDescription` dataclass
+3. Define `value_fn` lambda to extract from `FranklinWHData`
+4. Ensure proper unit of measurement, device class, state class
+5. For Energy Dashboard: use `UnitOfEnergy.KILO_WATT_HOUR`, `SensorDeviceClass.ENERGY`, `SensorStateClass.TOTAL_INCREASING`
+
+### Handling Blocking I/O
+Always wrap synchronous library calls:
+```python
+# CORRECT
+client = await hass.async_add_executor_job(create_client_function)
+stats = await hass.async_add_executor_job(client.get_stats)
+
+# WRONG - Blocks event loop
+client = franklinwh.Client(token_fetcher, gateway_id)
+stats = client.get_stats()
+```
+
+### Version Bumping Process
+1. Update `manifest.json` version field
+2. Commit changes with descriptive message
+3. Push to GitHub
+4. Create release: `gh release create v1.0.X --title "..." --notes "..."`
+5. Update `README.md` changelog
+
+## Troubleshooting Guide
+
+### "Requirements not found" Error
+- Check `manifest.json` requires `franklinwh>=0.4.1`
+- Verify version 0.4.1 exists on PyPI
+- Don't use versions that only exist on GitHub
+
+### ImportError for Classes
+- Verify class exists in franklinwh 0.4.1
+- Check if class is exported in `__init__.py`
+- Import from `franklinwh.client` if not exported
+
+### Entities Going Unavailable
+- Check coordinator's `_consecutive_failures` counter
+- Ensure `always_update=False` in coordinator init
+- Verify last known data is returned during failures
+- Max 3 failures before unavailable (configurable)
+
+### Blocking I/O Warnings
+- Wrap all `client.*` calls in `async_add_executor_job`
+- Never call synchronous methods directly in async functions
+- Check both `config_flow.py` and `coordinator.py`
+
+## Testing Checklist
+
+Before releasing:
+- [ ] Integration loads without errors
+- [ ] All sensors appear and update
+- [ ] Smart switches work (on/off)
+- [ ] Energy Dashboard compatibility (kWh sensors)
+- [ ] No blocking I/O warnings in logs
+- [ ] Config flow works for new setup
+- [ ] Coordinator handles temporary failures gracefully
+- [ ] Version bumped in manifest.json
+- [ ] README updated with changes
+- [ ] Git tag created for release
+
+## Energy Dashboard Requirements
+
+Sensors must have:
+1. `native_unit_of_measurement`: `UnitOfEnergy.KILO_WATT_HOUR` (not WATT_HOUR)
+2. `device_class`: `SensorDeviceClass.ENERGY`
+3. `state_class`: `SensorStateClass.TOTAL_INCREASING`
+4. Values should never decrease (cumulative totals)
+
+## Known Issues & Workarounds
+
+### Grid Connection Switch
+- Feature exists in code but removed in v1.0.7
+- Requires unreleased franklinwh library version
+- Will be restored when library is published to PyPI
+
+### Home Load Sensor
+- Exists in `sensor.py` as `home_load`
+- Maps to `stats.current.home_load`
+- Should work if integration loads successfully
+
+### Local API
+- Configuration fields disabled in UI (not functional)
+- Requires gateway firmware support
+- Most users should use cloud polling (default)
+
+## Code Style & Conventions
+
+- Use type hints for all functions
+- Follow Home Assistant coding standards
+- Async/await for all I/O operations
+- Comprehensive error handling with logging
+- Entity unique IDs: `{gateway_id}_{entity_key}`
+- Device identifiers: `(DOMAIN, gateway_id)`
+
+## Future Enhancements (Blocked)
+
+These require franklinwh library updates:
+1. Grid Connection switch (AccessoryType, GridStatus)
+2. Operation mode control (API methods)
+3. Battery reserve control (API methods)
+4. Local API support (gateway firmware)
+
+## Quick Reference Commands
+
+```bash
+# Check PyPI version
+curl -s https://pypi.org/pypi/franklinwh/json | python3 -c "import sys, json; print(json.load(sys.stdin)['info']['version'])"
+
+# Create release
+gh release create v1.0.X --title "Title" --notes "Notes"
+
+# Test in Home Assistant
+# 1. Copy to /config/custom_components/franklin_wh/
+# 2. Restart Home Assistant
+# 3. Check logs for errors
+# 4. Add integration via UI
+```
+
+## Contact & Resources
+
+- **Issues**: https://github.com/JoshuaSeidel/homeassistant-franklinwh/issues
+- **Documentation**: README.md in repo
+- **Library Repo**: https://github.com/richo/franklinwh-python
+- **Home Assistant Docs**: https://developers.home-assistant.io/
+
+---
+
+**Remember**: This integration is constrained by franklinwh library 0.4.1 from PyPI. Always verify against this version, not the GitHub master branch which has unreleased features.
+
