@@ -6,6 +6,8 @@ This is a modern custom integration for [Home Assistant](https://www.home-assist
 
 > ⚠️ This project is unofficial and not affiliated with FranklinWH.
 
+> 📝 **About This Fork**: Complete rewrite by Joshua Seidel ([@JoshuaSeidel](https://github.com/JoshuaSeidel)) with Anthropic Claude Sonnet 4.5. Originally inspired by [@richo](https://github.com/richo)'s [homeassistant-franklinwh](https://github.com/richo/homeassistant-franklinwh) and uses the [franklinwh-python](https://github.com/richo/franklinwh-python) library.
+
 ---
 
 ## ✨ Features
@@ -40,7 +42,7 @@ This is a modern custom integration for [Home Assistant](https://www.home-assist
 
 1. In Home Assistant, go to **HACS → Integrations**.
 2. Click the menu (⋮) → **Custom repositories**.
-3. Add this repository URL: `https://github.com/richo/homeassistant-franklinwh`
+3. Add this repository URL: `https://github.com/JoshuaSeidel/homeassistant-franklinwh`
 4. Choose category **Integration** and click **Add**.
 5. Search for **FranklinWH** in HACS and click **Download**.
 6. Restart Home Assistant.
@@ -250,7 +252,7 @@ This integration includes experimental support for local API communication. Curr
 
 Contributions are welcome! Please fork the repository and open a pull request:
 
-👉 [https://github.com/richo/homeassistant-franklinwh](https://github.com/richo/homeassistant-franklinwh)
+👉 [https://github.com/JoshuaSeidel/homeassistant-franklinwh](https://github.com/JoshuaSeidel/homeassistant-franklinwh)
 
 ### Development Setup
 
@@ -302,9 +304,11 @@ You may choose either license when using or contributing to this project.
 
 ## 🙏 Acknowledgments
 
-- Thanks to the Home Assistant community
-- Built on the [`franklinwh-python`](https://github.com/richo/franklinwh-python) library
-- Special thanks to all contributors
+- **Original Integration**: [@richo](https://github.com/richo) for the initial implementation
+- **Python Library**: [`franklinwh-python`](https://github.com/richo/franklinwh-python) by @richo
+- **Rewrite**: Joshua Seidel with Anthropic Claude Sonnet 4.5
+- **Community**: Thanks to the Home Assistant community
+- **Contributors**: Special thanks to all contributors including [@jkt628](https://github.com/jkt628) for Grid Connection switch
 
 ---
 

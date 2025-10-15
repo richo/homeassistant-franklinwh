@@ -1,4 +1,9 @@
-"""The FranklinWH integration."""
+"""The FranklinWH integration.
+
+Complete rewrite by Joshua Seidel (@JoshuaSeidel) with Anthropic Claude Sonnet 4.5.
+Originally inspired by @richo's homeassistant-franklinwh integration.
+Uses the franklinwh-python library by @richo.
+"""
 from __future__ import annotations
 
 import logging
