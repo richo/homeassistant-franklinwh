@@ -273,7 +273,15 @@ When reporting issues, please:
 
 ## 📋 Changelog
 
-### Version 1.0.0 (Current)
+### Version 1.0.4 (Current)
+- ✨ **NEW**: Grid Connection switch for controlling grid connectivity
+- ✨ **NEW**: Battery Charge from Grid calculated sensor
+- 🐛 **FIXED**: Entities no longer flicker unavailable during temporary failures
+- 🐛 **FIXED**: Energy Dashboard compatibility (all sensors in kWh)
+- ♻️ **IMPROVED**: Resilient coordinator with 3-failure grace period
+- ♻️ **IMPROVED**: Better error logging and failure tracking
+
+### Version 1.0.0-1.0.3
 - ✨ **NEW**: Modern config flow for UI-based setup
 - ✨ **NEW**: DataUpdateCoordinator for efficient API polling
 - ✨ **NEW**: Device registry integration
@@ -287,7 +295,7 @@ When reporting issues, please:
 - ♻️ **REFACTOR**: Better entity organization
 
 ### Version 0.4.1 (Legacy)
-- Initial YAML-based platform configuration
+- Initial YAML-based platform configuration by @richo
 - Basic sensor and switch support
 
 ---
@@ -320,4 +328,4 @@ This integration is not affiliated with, endorsed by, or supported by FranklinWH
 
 **Enjoy your FranklinWH integration! 🎉**
 
-For support, please open an issue on [GitHub](https://github.com/richo/homeassistant-franklinwh/issues).
+For support, please open an issue on [GitHub](https://github.com/JoshuaSeidel/homeassistant-franklinwh/issues).
