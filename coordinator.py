@@ -5,7 +5,8 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from franklinwh import Client, Stats, TokenFetcher
+from franklinwh import Client, TokenFetcher
+from franklinwh.client import Stats
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
