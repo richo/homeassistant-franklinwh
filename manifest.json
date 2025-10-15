@@ -8,7 +8,7 @@
   "iot_class": "cloud_polling",
   "integration_type": "hub",
   "requirements": ["franklinwh>=0.5.0"],
-  "version": "1.0.3",
+  "version": "1.0.4",
   "issue_tracker": "https://github.com/JoshuaSeidel/homeassistant-franklinwh/issues",
   "loggers": ["franklinwh"]
 }
