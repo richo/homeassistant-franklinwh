@@ -137,6 +137,8 @@ After setup, all entities will be organized under a single **FranklinWH** device
 | **Switch 2** | Control smart circuit 2 |
 | **Switch 3** | Control smart circuit 3 |
 
+> 📝 **Note**: Grid Connection switch is not available in franklinwh library 0.4.1. It will be added when a newer library version is published to PyPI.
+
 ---
 
 ## 🔧 Services
@@ -273,7 +275,13 @@ When reporting issues, please:
 
 ## 📋 Changelog
 
-### Version 1.0.6 (Current)
+### Version 1.0.7 (Current)
+- 🐛 **CRITICAL FIX**: Removed Grid Connection switch (requires unreleased library version)
+- 🐛 **FIXED**: ImportError for AccessoryType and GridStatus classes
+- 🐛 **FIXED**: Integration now loads successfully with franklinwh 0.4.1
+- ℹ️ **NOTE**: Smart circuit switches (1-3) still work correctly
+
+### Version 1.0.6
 - 🐛 **CRITICAL FIX**: Fixed Stats class import from franklinwh.client module
 - 🐛 **FIXED**: "cannot import name 'Stats'" ImportError on setup
 
@@ -282,12 +290,12 @@ When reporting issues, please:
 - 🐛 **FIXED**: "Requirements for franklin_wh not found" error on setup
 
 ### Version 1.0.4
-- ✨ **NEW**: Grid Connection switch for controlling grid connectivity
 - ✨ **NEW**: Battery Charge from Grid calculated sensor
 - 🐛 **FIXED**: Entities no longer flicker unavailable during temporary failures
 - 🐛 **FIXED**: Energy Dashboard compatibility (all sensors in kWh)
 - ♻️ **IMPROVED**: Resilient coordinator with 3-failure grace period
 - ♻️ **IMPROVED**: Better error logging and failure tracking
+- ⚠️ **NOTE**: Grid Connection switch from this version removed in 1.0.7 (library compatibility)
 
 ### Version 1.0.0-1.0.3
 - ✨ **NEW**: Modern config flow for UI-based setup
