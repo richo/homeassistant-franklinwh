@@ -100,7 +100,13 @@ async def async_setup_platform(
                 return data
 
             except franklinwh.client.DeviceTimeoutException as e:
-                _LOGGER.warning("Timeout getting data from FranklinWH: %s", e)
+                _LOGGER.warning("Error getting data from FranklinWH - Device Timeout: %s", e)
+            except franklinwh.client.GatewayOfflineException as e:
+                _LOGGER.warning("Error getting data from FranklinWH - Gateway Offline %s", e)
+            except franklinwh.client.AccountLockedException as e:
+                _LOGGER.warning("Error getting data from FranklinWH - Account Locked %s", e)
+            except franklinwh.client.InvalidCredentialsException as e:
+                _LOGGER.warning("Error getting data from FranklinWH - Invalid Credentials %s", e)
 
         _LOGGER.warning(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
         raise UpdateFailed(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
