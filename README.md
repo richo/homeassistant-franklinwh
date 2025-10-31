@@ -51,24 +51,24 @@ This integration currently requires **manual YAML configuration** in your `confi
 ```yaml
 sensor:
   - platform: franklin_wh
-   username: "email@domain.com"
-   password: !secret franklinwh_password
-   id: "100xxxxxxxxxxxx"
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
 
 switch:
   - platform: franklin_wh
-   username: "email@domain.com"
-   password: !secret franklinwh_password
-   id: "100xxxxxxxxxxxx"
-   switches: [3]
-   name: "FWH switch1"
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    switches: [3]
+    name: "FWH switch1"
 
   - platform: franklin_wh
-   username: "email@domain.com"
-   password: !secret franklinwh_password
-   id: "100xxxxxxxxxxxx"
-   switches: [1, 2]
-   name: "FWH switch2"
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    switches: [1, 2]
+    name: "FWH switch2"
 ```
 
 After updating your configuration, restart Home Assistant to apply the changes.
