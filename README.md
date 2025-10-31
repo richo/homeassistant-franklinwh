@@ -42,33 +42,33 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 
 This integration currently requires **manual YAML configuration** in your `configuration.yaml` file.
 
-> 💡 For security, store your password in `secrets.yaml` instead of writing it directly in your config.  
-> 🔎 You can find your Gateway ID / Serial Number in the FranklinWH mobile app under:  
+> 💡 For security, store your password in `secrets.yaml` instead of writing it directly in your config.
+> 🔎 You can find your Gateway ID / Serial Number in the FranklinWH mobile app under:
 > **Settings → Device Info → SN**
 
 ### Configuration Example
 
 ```yaml
 sensor:
-- platform: franklin_wh
- username: "email@domain.com"
- password: !secret franklinwh_password
- id: "100xxxxxxxxxxxx"
+  - platform: franklin_wh
+   username: "email@domain.com"
+   password: !secret franklinwh_password
+   id: "100xxxxxxxxxxxx"
 
 switch:
-- platform: franklin_wh
- username: "email@domain.com"
- password: !secret franklinwh_password
- id: "100xxxxxxxxxxxx"
- switches: [3]
- name: "FWH switch1"
+  - platform: franklin_wh
+   username: "email@domain.com"
+   password: !secret franklinwh_password
+   id: "100xxxxxxxxxxxx"
+   switches: [3]
+   name: "FWH switch1"
 
-- platform: franklin_wh
- username: "email@domain.com"
- password: !secret franklinwh_password
- id: "100xxxxxxxxxxxx"
- switches: [1, 2]
- name: "FWH switch2"
+  - platform: franklin_wh
+   username: "email@domain.com"
+   password: !secret franklinwh_password
+   id: "100xxxxxxxxxxxx"
+   switches: [1, 2]
+   name: "FWH switch2"
 ```
 
 After updating your configuration, restart Home Assistant to apply the changes.
