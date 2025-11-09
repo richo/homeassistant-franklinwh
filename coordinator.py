@@ -121,9 +121,7 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
     async def async_set_switch_state(self, switches: tuple[bool, bool, bool]) -> None:
         """Set the state of smart switches."""
         try:
-            await self.hass.async_add_executor_job(
-                self.client.set_smart_switch_state, switches
-            )
+            await self.client.set_smart_switch_state(switches)
             # Request immediate refresh
             await self.async_request_refresh()
         except Exception as err:
