@@ -1,39 +1,60 @@
-# Services for FranklinWH integration
-
-set_operation_mode:
+set_mode:
   name: Set Operation Mode
-  description: Set the operation mode of the FranklinWH system.
+  description: Set the operating mode of the FranklinWH system
   fields:
+    entity_id:
+      name: Entity
+      description: Any entity from your FranklinWH device (used to identify the device)
+      required: true
+      selector:
+        entity:
+          integration: franklin_wh
     mode:
       name: Mode
-      description: The operation mode to set.
+      description: The desired operating mode
       required: true
-      example: "self_use"
       selector:
         select:
           options:
-            - label: "Self Use"
-              value: "self_use"
-            - label: "Backup"
-              value: "backup"
-            - label: "Time of Use"
-              value: "time_of_use"
-            - label: "Clean Backup"
-              value: "clean_backup"
-
-set_battery_reserve:
-  name: Set Battery Reserve
-  description: Set the minimum battery reserve percentage.
-  fields:
-    reserve_percent:
-      name: Reserve Percentage
-      description: Minimum battery charge to maintain (0-100%).
-      required: true
-      example: 20
+            - "Time of Use"
+            - "Self Consumption"
+            - "Emergency Backup"
+    soc:
+      name: Battery Reserve
+      description: Minimum battery reserve level (0-100%). If not provided, current reserve level is preserved.
+      required: false
       selector:
         number:
           min: 0
           max: 100
           unit_of_measurement: "%"
-          mode: slider
 
+set_operation_mode:
+  name: Set Operation Mode (Legacy)
+  description: "[DEPRECATED] Use set_mode instead. Set the operation mode of your FranklinWH system."
+  fields:
+    mode:
+      name: Mode
+      description: Operation mode
+      required: true
+      selector:
+        select:
+          options:
+            - self_use
+            - backup
+            - time_of_use
+            - clean_backup
+
+set_battery_reserve:
+  name: Set Battery Reserve (Legacy)
+  description: "[DEPRECATED] Use set_mode with soc parameter instead. Set the minimum battery reserve percentage."
+  fields:
+    reserve_percent:
+      name: Reserve Percent
+      description: Minimum battery charge to maintain (0-100)
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
