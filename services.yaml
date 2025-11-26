@@ -28,33 +28,3 @@ set_mode:
           min: 0
           max: 100
           unit_of_measurement: "%"
-
-set_operation_mode:
-  name: Set Operation Mode (Legacy)
-  description: "[DEPRECATED] Use set_mode instead. Set the operation mode of your FranklinWH system."
-  fields:
-    mode:
-      name: Mode
-      description: Operation mode
-      required: true
-      selector:
-        select:
-          options:
-            - self_use
-            - backup
-            - time_of_use
-            - clean_backup
-
-set_battery_reserve:
-  name: Set Battery Reserve (Legacy)
-  description: "[DEPRECATED] Use set_mode with soc parameter instead. Set the minimum battery reserve percentage."
-  fields:
-    reserve_percent:
-      name: Reserve Percent
-      description: Minimum battery charge to maintain (0-100)
-      required: true
-      selector:
-        number:
-          min: 0
-          max: 100
-          unit_of_measurement: "%"
