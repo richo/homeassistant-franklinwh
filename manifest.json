@@ -1,14 +1,14 @@
 {
   "domain": "franklin_wh",
   "name": "FranklinWH",
-  "codeowners": ["@JoshuaSeidel"],
+  "codeowners": ["@nrp929"],
   "config_flow": true,
   "dependencies": [],
-  "documentation": "https://github.com/JoshuaSeidel/homeassistant-franklinwh/wiki",
+  "documentation": "https://github.com/nrp929/homeassistant-franklinwh",
   "iot_class": "cloud_polling",
   "integration_type": "hub",
   "requirements": ["franklinwh>=0.6.0"],
   "version": "1.0.9",
-  "issue_tracker": "https://github.com/JoshuaSeidel/homeassistant-franklinwh/issues",
+  "issue_tracker": "https://github.com/nrp929/homeassistant-franklinwh/issues",
   "loggers": ["franklinwh"]
 }
