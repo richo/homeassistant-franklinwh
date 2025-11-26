@@ -4,7 +4,7 @@ Complete rewrite by Joshua Seidel (@JoshuaSeidel) with Anthropic Claude Sonnet 4
 Originally inspired by @richo's homeassistant-franklinwh integration.
 Uses the franklinwh-python library by @richo.
 
-set_mode implementation based on j4m3z0r's fork.
+set_mode service implementation based on @j4m3z0r's working fork.
 """
 from __future__ import annotations
 
@@ -23,8 +23,6 @@ from .const import (
     CONF_LOCAL_HOST,
     CONF_USE_LOCAL_API,
     DOMAIN,
-    SERVICE_SET_BATTERY_RESERVE,
-    SERVICE_SET_OPERATION_MODE,
 )
 from .coordinator import FranklinWHCoordinator
 
@@ -32,7 +30,6 @@ _LOGGER = logging.getLogger(__name__)
 
 PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH]
 
-# Add new service name
 SERVICE_SET_MODE = "set_mode"
 
 # Mode mapping from j4m3z0r's implementation
@@ -78,7 +75,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
     # Set up platforms
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
 
-    # Register services
+    # Register service
     async def handle_set_mode(call: ServiceCall) -> None:
         """Handle the set_mode service call.
         
@@ -119,7 +116,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
         if not hasattr(franklinwh, 'Mode'):
             _LOGGER.error(
                 "franklinwh.Mode class not found. Your franklinwh library version "
-                "does not support mode changes. Please update to a newer version."
+                "does not support mode changes. Please update to version 0.6.0 or newer."
             )
             return
 
@@ -157,29 +154,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                 err
             )
 
-    async def handle_set_operation_mode(call: ServiceCall) -> None:
-        """Handle the set_operation_mode service call."""
-        _LOGGER.warning(
-            "Service 'set_operation_mode' is deprecated. Please use 'set_mode' instead."
-        )
-        mode = call.data.get("mode")
-        try:
-            await coordinator.async_set_operation_mode(mode)
-        except NotImplementedError:
-            _LOGGER.warning("Operation mode control not yet available in API")
-
-    async def handle_set_battery_reserve(call: ServiceCall) -> None:
-        """Handle the set_battery_reserve service call."""
-        _LOGGER.warning(
-            "Service 'set_battery_reserve' is deprecated. Please use 'set_mode' with soc parameter instead."
-        )
-        reserve_percent = call.data.get("reserve_percent")
-        try:
-            await coordinator.async_set_battery_reserve(reserve_percent)
-        except NotImplementedError:
-            _LOGGER.warning("Battery reserve control not yet available in API")
-
-    # Register services only once
+    # Register service only once
     if not hass.services.has_service(DOMAIN, SERVICE_SET_MODE):
         hass.services.async_register(
             DOMAIN,
@@ -195,30 +170,6 @@ async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
                         vol.Coerce(int), vol.Range(min=0, max=100)
                     ),
                 }
-            ),
-        )
-
-    if not hass.services.has_service(DOMAIN, SERVICE_SET_OPERATION_MODE):
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SET_OPERATION_MODE,
-            handle_set_operation_mode,
-            schema=vol.Schema(
-                {
-                    vol.Required("mode"): vol.In(
-                        ["self_use", "backup", "time_of_use", "clean_backup"]
-                    )
-                }
-            ),
-        )
-
-    if not hass.services.has_service(DOMAIN, SERVICE_SET_BATTERY_RESERVE):
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SET_BATTERY_RESERVE,
-            handle_set_battery_reserve,
-            schema=vol.Schema(
-                {vol.Required("reserve_percent"): vol.All(vol.Coerce(int), vol.Range(min=0, max=100))}
             ),
         )
 
