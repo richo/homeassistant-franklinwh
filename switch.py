@@ -52,6 +52,7 @@ async def async_setup_platform(
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
     name: str = config[CONF_NAME]
+    update_interval: timedelta = config["update_interval"]
 
     # TODO(richo) why does it string the default value
     if config["use_sn"] and config["use_sn"] != "False":
@@ -135,16 +136,18 @@ class SmartCircuitSwitch(SwitchEntity):
         """If the switch is currently on or off."""
         return self._is_on
 
-    def turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
         switches = [None, None, None]
         for i in self.switches:
             switches[i] = True
-        self.client.set_smart_switch_state(switches)
+        await self.client.set_smart_switch_state(switches)
+        await coordinator.async_refresh()
 
-    def turn_off(self, **kwargs):
+    async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
         switches = [None, None, None]
         for i in self.switches:
             switches[i] = False
-        self.client.set_smart_switch_state(switches)
+        await self.client.set_smart_switch_state(switches)
+        await coordinator.async_refresh()
