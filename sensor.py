@@ -211,7 +211,7 @@ class GridUseSensor(FranklinSensor):
 
     @property
     def native_value(self):
-        return self.coordinator.data.current.grid_use * -1
+        return self.coordinator.data.current.grid_use
 
 class GridImportSensor(FranklinSensor):
     """Shows the amount of energy imported from the grid"""
@@ -281,7 +281,7 @@ class BatteryUseSensor(FranklinSensor):
 
     @property
     def native_value(self):
-        return self.coordinator.data.current.battery_use * -1
+        return self.coordinator.data.current.battery_use
 
 
 class BatteryChargeSensor(FranklinSensor):
