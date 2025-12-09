@@ -97,6 +97,27 @@ After updating your configuration, restart Home Assistant to apply the changes.
 | FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
 | FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
 
+# Flipping sensors
+
+If you want to reverse a sensor, you can create a template sensor:
+
+```yaml
+  - sensor:
+    - name: corrected_battery_use
+      state: >
+        {{ -(states('sensor.franklinwh_battery_use') | float) }}
+      unit_of_measurement: kW
+      state_class: measurement
+      device_class: power
+  - sensor:
+    - name: corrected_grid_use
+      state: >
+        {{ -(states('sensor.franklinwh_grid_use') | float) }}
+      unit_of_measurement: kW
+      state_class: measurement
+      device_class: power
+```
+
 Troubleshooting
 	•	If no entities appear, confirm your username, password, and gateway ID.
 	•	Check that FranklinWH cloud services are online.
