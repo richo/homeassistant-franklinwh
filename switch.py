@@ -142,7 +142,7 @@ class SmartCircuitSwitch(SwitchEntity):
         for i in self.switches:
             switches[i] = True
         await self.client.set_smart_switch_state(switches)
-        await coordinator.async_refresh()
+        await self.coordinator.async_refresh()
 
     async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
@@ -150,4 +150,4 @@ class SmartCircuitSwitch(SwitchEntity):
         for i in self.switches:
             switches[i] = False
         await self.client.set_smart_switch_state(switches)
-        await coordinator.async_refresh()
+        await self.coordinator.async_refresh()
