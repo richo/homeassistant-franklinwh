@@ -122,6 +122,9 @@ class SmartCircuitSwitch(SwitchEntity):
 
     def update(self):
         state = self.coordinator.data
+        if state is None:
+            # I think this should never happen, since it wouldn't be Available but here we are
+            return
         values = list(map(lambda x: state[x], self.switches))
         if all(values):
             self._is_on = True
