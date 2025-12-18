@@ -116,10 +116,6 @@ class SmartCircuitSwitch(SwitchEntity):
             self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_" + name
 
-    @property
-    def available(self) -> bool:
-        return self.coordinator.last_update_success and self.coordinator.data is not None
-
     def update(self):
         state = self.coordinator.data
         if state is None:
