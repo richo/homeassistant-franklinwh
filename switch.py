@@ -105,8 +105,9 @@ async def async_setup_platform(
         ])
 
 # Is it chill to have a switch in here? We'll see!
-class SmartCircuitSwitch(SwitchEntity):
+class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
     def __init__(self, prefix, unique_id, name, switches, client, coordinator):
+        super().__init__(coordinator)
         self._is_on = False
         self.switches = switches
         self._attr_name = "{} {}".format(prefix, name)
@@ -119,9 +120,11 @@ class SmartCircuitSwitch(SwitchEntity):
     def update(self):
         state = self.coordinator.data
         if state is None:
+            _LOGGER.warning("Corrdinator data was None")
             # I think this should never happen, since it wouldn't be Available but here we are
             return
         values = list(map(lambda x: state[x], self.switches))
+        _LOGGER.info("Data from Switch: %s", repr(values))
         if all(values):
             self._is_on = True
         elif all(map(lambda x: x is False, values)):
