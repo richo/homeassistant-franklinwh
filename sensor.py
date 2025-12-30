@@ -1,8 +1,9 @@
 from __future__ import annotations
 from datetime import timedelta
 import logging
-import random
-import asyncio as  asyncio
+import asyncio
+import httpx
+from functools import partial
 
 import franklinwh
 
@@ -87,8 +88,9 @@ async def async_setup_platform(
     else:
         prefix = "FranklinWH"
 
-    fetcher = franklinwh.TokenFetcher(username, password)
-    client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
+    session = await hass.async_add_executor_job(partial(httpx.AsyncClient, http2=True))
+    fetcher = franklinwh.TokenFetcher(username, password, session=session)
+    client = franklinwh.Client(fetcher, gateway, session=session)
 
     cache = StaleDataCache()
     async def _update_data():
