@@ -5,13 +5,14 @@ from __future__ import annotations
 from datetime import timedelta
 import logging
 
-from franklinwh import Client, Stats, TokenFetcher
+from franklinwh import Client, Stats
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 
 from .const import DEFAULT_LOCAL_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .utils import get_client
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -77,8 +78,12 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
             if self.client is None and not self._client_lock:
                 self._client_lock = True
                 try:
-                    token_fetcher = TokenFetcher(self.username, self.password)
-                    self.client = Client(token_fetcher, self.gateway_id)
+                    _, self.client = await get_client(
+                        self.hass,
+                        self.username,
+                        self.password,
+                        self.gateway_id,
+                    )
                     await self.client.refresh_token()
                 except Exception as err:
                     self._client_lock = False

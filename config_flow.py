@@ -5,7 +5,6 @@ from __future__ import annotations
 import logging
 from typing import Any
 
-import franklinwh
 import voluptuous as vol
 
 from homeassistant import config_entries
@@ -16,6 +15,7 @@ from homeassistant.exceptions import HomeAssistantError
 import homeassistant.helpers.config_validation as cv
 
 from .const import CONF_GATEWAY_ID, DEFAULT_SCAN_INTERVAL, DOMAIN
+from .utils import get_client
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -30,8 +30,12 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
     gateway_id = data[CONF_GATEWAY_ID]
 
     try:
-        token_fetcher = franklinwh.TokenFetcher(username, password)
-        client = franklinwh.Client(token_fetcher, gateway_id)
+        _, client = await get_client(
+            hass,
+            username,
+            password,
+            gateway_id,
+        )
 
         # Try to fetch data to validate credentials and gateway
         stats = await client.get_stats()
@@ -45,7 +49,7 @@ async def validate_input(hass: HomeAssistant, data: dict[str, Any]) -> dict[str,
             "gateway_id": gateway_id,
         }
     except Exception as err:
-        _LOGGER.exception("Unexpected exception: %s", err)
+        _LOGGER.exception("Unexpected exception")
         error_str = str(err).lower()
 
         # Check for specific error types
