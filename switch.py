@@ -15,7 +15,7 @@ from homeassistant.const import (
         CONF_NAME,
         CONF_SWITCHES,
         )
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 
@@ -117,14 +117,19 @@ class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
             self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + "_" + name
 
-    def update(self):
+    @property
+    def available(self) -> bool:
+        _LOGGER.debug("Checking for switch availability")
+        return self.coordinator.last_update_success and self.coordinator.data is not None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
         state = self.coordinator.data
         if state is None:
             _LOGGER.warning("Corrdinator data was None")
             # I think this should never happen, since it wouldn't be Available but here we are
             return
         values = list(map(lambda x: state[x], self.switches))
-        _LOGGER.info("Data from Switch: %s", repr(values))
         if all(values):
             self._is_on = True
         elif all(map(lambda x: x is False, values)):
@@ -132,6 +137,7 @@ class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
         else:
             # Something's fucky!
             self._is_on = None
+        self.async_write_ha_state()
 
     @property
     def is_on(self):

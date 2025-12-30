@@ -9,5 +9,4 @@
   "requirements": ["franklinwh>=1.0.0"],
   "version": "0.5.0",
   "issue_tracker": "https://github.com/richo/homeassistant-franklinwh/issues"
-
 }
