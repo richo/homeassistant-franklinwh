@@ -46,8 +46,22 @@ PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
             vol.Optional("use_sn", default=False): cv.boolean,
             vol.Optional("prefix", default=False): cv.string,
             vol.Optional("update_interval", default=DEFAULT_UPDATE_INTERVAL): cv.time_period,
+            vol.Optional("tolerate_stale_data", default=False): cv.boolean,
             }
         )
+
+class StaleDataCache:
+    def __init__(self):
+        self.last_data = None
+
+    def store(self, data):
+        self.last_data = data
+
+    def is_populated(self) -> bool:
+        return self.last_data is not None
+
+    def data(self) -> Any:
+        return self.last_data
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -76,6 +90,7 @@ async def async_setup_platform(
     fetcher = franklinwh.TokenFetcher(username, password)
     client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
 
+    cache = StaleDataCache()
     async def _update_data():
         max_retries = 3
         retry_delay = 2  # seconds
@@ -91,6 +106,7 @@ async def async_setup_platform(
                     _LOGGER.warning("Successfully fetched data from FranklinWH after retry.")
                 else:
                     _LOGGER.debug("Fetched latest data from FranklinWH: %s", data)
+                StaleDataCache.store(data)
                 return data
 
             except franklinwh.client.DeviceTimeoutException as e:
@@ -103,6 +119,10 @@ async def async_setup_platform(
                 _LOGGER.warning("Error getting data from FranklinWH - Invalid Credentials %s", e)
 
         _LOGGER.warning(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
+
+        if config["tolerate_stale_data"] and StaleDataCache.is_populated():
+            return StaleDataCache.data()
+
         raise UpdateFailed(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
 
     coordinator = DataUpdateCoordinator(
