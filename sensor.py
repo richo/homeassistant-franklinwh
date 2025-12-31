@@ -106,7 +106,7 @@ async def async_setup_platform(
                     _LOGGER.warning("Successfully fetched data from FranklinWH after retry.")
                 else:
                     _LOGGER.debug("Fetched latest data from FranklinWH: %s", data)
-                StaleDataCache.store(data)
+                cache.store(data)
                 return data
 
             except franklinwh.client.DeviceTimeoutException as e:
@@ -120,8 +120,8 @@ async def async_setup_platform(
 
         _LOGGER.warning(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
 
-        if config["tolerate_stale_data"] and StaleDataCache.is_populated():
-            return StaleDataCache.data()
+        if config["tolerate_stale_data"] and cache.is_populated():
+            return cache.data()
 
         raise UpdateFailed(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
 
