@@ -54,7 +54,20 @@ sensor:
     username: "email@domain.com"
     password: !secret franklinwh_password
     id: "100xxxxxxxxxxxx"
+```
 
+### Smart Relays
+
+The integration can also manage smart relays, if you have them installed in your gateway. It is
+vitally important not to enable this feature if you do not have them physically present in your
+installation, as well as to ensure that the configuration here matches your configuration.
+
+FranklinWH supports combining relays, which is why the `switches` parameter is an array- if you have
+multiple switches ganged together, include both of their indexes.
+
+An example:
+
+```yaml
 switch:
   - platform: franklin_wh
     username: "email@domain.com"
@@ -72,6 +85,16 @@ switch:
 ```
 
 After updating your configuration, restart Home Assistant to apply the changes.
+
+### Advanced Configuration
+
+| Configuration Option         | Unit   | Description                                                               | sensor | switch |
+|---------------------------------------|---------------------------------------------------------------------------|--------|--------|
+| `use_sn`                     | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
+| `prefix`                     | string | Specity a prefix to be used when creating entities                        |  ✅    |   ✅   |
+| `update_interval`            | time   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
+| `tolerate_stale_data`        | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |        |
+
 
 ## Available Entities
 
