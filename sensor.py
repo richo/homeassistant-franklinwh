@@ -1,44 +1,41 @@
 from __future__ import annotations
+
+import asyncio
 from datetime import timedelta
 import logging
-import random
-import asyncio as  asyncio
 
 import franklinwh
-
+import httpx
 import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
-from homeassistant.helpers.update_coordinator import UpdateFailed
 
 from homeassistant.components.sensor import (
-    PLATFORM_SCHEMA as PARENT_PLATFORM_SCHEMA,
+    PLATFORM_SCHEMA as SENSOR_PLATFORM_SCHEMA,
     SensorDeviceClass,
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import (
-        UnitOfPower,
-        UnitOfEnergy,
-        PERCENTAGE,
-        CONF_USERNAME,
-        CONF_PASSWORD,
-        CONF_ID,
-        )
-
+    CONF_ID,
+    CONF_PASSWORD,
+    CONF_USERNAME,
+    PERCENTAGE,
+    UnitOfEnergy,
+    UnitOfPower,
+)
 from homeassistant.core import HomeAssistant
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
+    UpdateFailed,
 )
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_UPDATE_INTERVAL = 30
 
-PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
+PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
         {
             vol.Required(CONF_USERNAME): cv.string,
             vol.Required(CONF_PASSWORD): cv.string,
@@ -73,8 +70,12 @@ async def async_setup_platform(
     else:
         prefix = "FranklinWH"
 
+    async def get_client() -> httpx.AsyncClient:
+        return await hass.async_add_executor_job(lambda: httpx.AsyncClient(http2=True))
+
+    franklinwh.HttpClientFactory.set_client_factory(get_client)
     fetcher = franklinwh.TokenFetcher(username, password)
-    client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
+    client = franklinwh.Client(fetcher, gateway)
 
     async def _update_data():
         max_retries = 3
