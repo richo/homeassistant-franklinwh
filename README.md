@@ -16,6 +16,7 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 - Generator and home load insights
 - Switch load and usage tracking
 - Support for V2L (Vehicle-to-Load) data
+- Service to control operating mode (Time of Use, Self Consumption, Emergency Backup)
 
 ---
 
@@ -75,6 +76,8 @@ After updating your configuration, restart Home Assistant to apply the changes.
 
 ## Available Entities
 
+### Sensors
+
 | Entity Name                          | Description                               | Unit      |
 |-------------------------------------|-------------------------------------------|-----------|
 | FranklinWH State of Charge          | Battery state of charge                   | %         |
@@ -97,39 +100,84 @@ After updating your configuration, restart Home Assistant to apply the changes.
 | FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
 | FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
 
-# Flipping sensors
+## Operating Mode Control
 
-If you want to reverse a sensor, you can create a template sensor:
+The integration provides a service to control the FranklinWH system's operating mode via automations and scripts.
+
+### Available Modes
+
+- **Time of Use**: Optimizes battery usage based on time-of-use electricity rates
+- **Self Consumption**: Maximizes use of self-generated solar energy
+- **Emergency Backup**: Preserves battery charge for backup power during outages
+
+### Service: `franklin_wh.set_mode`
+
+Use this service in automations, scripts, or the Developer Tools to change your FranklinWH system's operating mode.
 
 ```yaml
-  - sensor:
-    - name: corrected_battery_use
-      state: >
-        {{ -(states('sensor.franklinwh_battery_use') | float) }}
-      unit_of_measurement: kW
-      state_class: measurement
-      device_class: power
-  - sensor:
-    - name: corrected_grid_use
-      state: >
-        {{ -(states('sensor.franklinwh_grid_use') | float) }}
-      unit_of_measurement: kW
-      state_class: measurement
-      device_class: power
+# Example service call
+service: franklin_wh.set_mode
+data:
+  entity_id: sensor.franklinwh_state_of_charge
+  mode: "Time of Use"
+  soc: 20  # Optional - battery reserve level (%)
 ```
 
-Troubleshooting
-	•	If no entities appear, confirm your username, password, and gateway ID.
-	•	Check that FranklinWH cloud services are online.
-	•	Review logs via Settings → System → Logs for errors containing franklin_wh.
+**Service Parameters:**
 
-Contributing
+- **`entity_id`** (Required): Any entity from your FranklinWH device (e.g., `sensor.franklinwh_state_of_charge` or any other sensor from the integration). This is used to identify which device to control.
+- **`mode`** (Required): The desired mode. Must be one of `"Time of Use"`, `"Self Consumption"`, or `"Emergency Backup"`.
+- **`soc`** (Optional): The desired battery reserve level (0-100%). If not provided, the device's current reserve level will be preserved.
+
+### Automation Examples
+
+```yaml
+# Switch to emergency backup mode when severe weather is forecast
+automation:
+  - alias: "FranklinWH Emergency Mode for Severe Weather"
+    trigger:
+      - platform: state
+        entity_id: weather.home
+        attribute: warning
+    condition:
+      - condition: template
+        value_template: "{{ 'severe' in trigger.to_state.attributes.warning }}"
+    action:
+      - service: franklin_wh.set_mode
+        data:
+          entity_id: sensor.franklinwh_state_of_charge
+          mode: "Emergency Backup"
+          soc: 100
+
+# Switch to self-consumption during the day
+  - alias: "FranklinWH Day Mode"
+    trigger:
+      - platform: time
+        at: "06:00:00"
+    action:
+      - service: franklin_wh.set_mode
+        data:
+          entity_id: sensor.franklinwh_state_of_charge
+          mode: "Self Consumption"
+```
+
+## Troubleshooting
+
+- If no entities appear, confirm your username, password, and gateway ID.
+- Check that FranklinWH cloud services are online.
+- Review logs via Settings → System → Logs for errors containing franklin_wh.
+
+---
+
+## Contributing
 
 Contributions are welcome! Please fork the repository and open a pull request:
 
 👉 https://github.com/richo/homeassistant-franklinwh
 
-License
+---
+
+## License
 
 This project is dual-licensed under the MIT License and the Apache License 2.0.
 
