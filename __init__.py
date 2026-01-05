@@ -86,7 +86,7 @@ async def async_setup(hass: HomeAssistant, config: ConfigType) -> bool:
                 gateway_id,
                 mode,
             )
-            await hass.async_add_executor_job(client.set_mode, mode)
+            await client.set_mode(mode)
             _LOGGER.info(
                 "Successfully set mode to '%s' for gateway %s", mode_name, gateway_id
             )
