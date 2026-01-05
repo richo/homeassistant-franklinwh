@@ -1,7 +1,6 @@
 from __future__ import annotations
 from datetime import timedelta
 import logging
-import random
 import asyncio as  asyncio
 
 import franklinwh
@@ -71,27 +70,23 @@ async def async_setup_platform(
     fetcher = franklinwh.TokenFetcher(username, password)
     client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
 
-    def _update_data_sync():
-        # Comment this in to simulate timeouts for debugging
-        #if random.randint(1, 4) != 1:
-        #    raise franklinwh.client.DeviceTimeoutException("Simulated timeout for debugging")
-        return client.get_stats()
-
     async def _update_data():
         max_retries = 3
         retry_delay = 2  # seconds
+
         _LOGGER.debug("Fetching latest data from FranklinWH...")
         for attempt in range(max_retries):
             if attempt > 0:
                 _LOGGER.warning("Trying again...")
                 await asyncio.sleep(retry_delay)
             try:
-                data = await hass.async_add_executor_job(_update_data_sync)
+                data = await client.get_stats()
                 if(attempt > 0):
                     _LOGGER.warning("Successfully fetched data from FranklinWH after retry.")
                 else:
                     _LOGGER.debug("Fetched latest data from FranklinWH: %s", data)
                 return data
+
             except franklinwh.client.DeviceTimeoutException as e:
                 _LOGGER.warning("Error getting data from FranklinWH - Device Timeout: %s", e)
             except franklinwh.client.GatewayOfflineException as e:
@@ -100,6 +95,7 @@ async def async_setup_platform(
                 _LOGGER.warning("Error getting data from FranklinWH - Account Locked %s", e)
             except franklinwh.client.InvalidCredentialsException as e:
                 _LOGGER.warning("Error getting data from FranklinWH - Invalid Credentials %s", e)
+
         _LOGGER.warning(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
         raise UpdateFailed(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
 
