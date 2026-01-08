@@ -18,6 +18,7 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant, callback
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.httpx_client import create_async_httpx_client
 
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -48,6 +49,9 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None
 ) -> None:
     """Set up the sensor platform."""
+    # Setup the client factory in franklinwh
+    franklinwh.HttpClientFactory.set_client_factory(lambda: create_async_httpx_client(hass)) # , http2=True))
+
     username: str = config[CONF_USERNAME]
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
