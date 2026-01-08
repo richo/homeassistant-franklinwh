@@ -6,7 +6,7 @@
   "documentation": "https://github.com/richo/homeassistant-franklinwh/wiki",
   "iot_class": "cloud_polling",
   "integration_type": "hub",
-  "requirements": ["franklinwh>=1.0.0"],
+  "requirements": ["franklinwh@git+https://github.com/richo/franklinwh-python.git@a3be784"],
   "version": "0.5.0",
   "issue_tracker": "https://github.com/richo/homeassistant-franklinwh/issues"
 }

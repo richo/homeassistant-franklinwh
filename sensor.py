@@ -30,6 +30,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.httpx_client import create_async_httpx_client
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -70,6 +71,9 @@ async def async_setup_platform(
     discovery_info: DiscoveryInfoType | None = None
 ) -> None:
     """Set up the sensor platform."""
+    # Setup the client factory in franklinwh
+    franklinwh.HttpClientFactory.set_client_factory(lambda: create_async_httpx_client(hass)) #, http2=True))
+
     username: str = config[CONF_USERNAME]
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
@@ -88,7 +92,7 @@ async def async_setup_platform(
         prefix = "FranklinWH"
 
     fetcher = franklinwh.TokenFetcher(username, password)
-    client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
+    client = franklinwh.Client(fetcher, gateway)
 
     cache = StaleDataCache()
     async def _update_data():
@@ -106,7 +110,7 @@ async def async_setup_platform(
                     _LOGGER.warning("Successfully fetched data from FranklinWH after retry.")
                 else:
                     _LOGGER.debug("Fetched latest data from FranklinWH: %s", data)
-                StaleDataCache.store(data)
+                cache.store(data)
                 return data
 
             except franklinwh.client.DeviceTimeoutException as e:
@@ -120,8 +124,8 @@ async def async_setup_platform(
 
         _LOGGER.warning(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
 
-        if config["tolerate_stale_data"] and StaleDataCache.is_populated():
-            return StaleDataCache.data()
+        if config["tolerate_stale_data"] and cache.is_populated():
+            return cache.data()
 
         raise UpdateFailed(f"Failed to fetch data from FranklinWH after {max_retries} attempts.")
 
