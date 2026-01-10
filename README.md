@@ -88,35 +88,12 @@ After updating your configuration, restart Home Assistant to apply the changes.
 
 ### Advanced Configuration
 
-Both the sensor and switch integrations support some advanced features:
-
-#### `use_sn`, `prefix`:
-
-If you have more than one gateway present, you'll need to use one of these options.
-
-Setting `use_sn` to `true` will prefix the entities with their serial number,
-allowing you to differentiate between them.
-
-Similarly, `prefix` adds a prefix to the entities, but allows you to choose
-that prefix instead of using their serial numbers.
-
-#### `update_interval`
-
-Allows overriding the update interval, in seconds. The default is 30.
-
-
-Those options work for both `sensor` and `switch`.
-
-#### `tolerate_stale_data`
-
-For the `sensor` integration only, this option will cause the dashboard to show
-stale data, instead of marking the sensors unavailble when the API times out or
-otherwise fails to return usable data.
-
-This will mean the dashboard is more available, but may mean the data is less
-safe to rely on in aggregate. There is now way at this time to surface when the
-last successful update was on the dashboard.
-
+| Configuration Option         | Unit   | Description                                                               | sensor | switch |
+| ---------------------------- | ------ | --------------------------------------------------------------------------| ------ | ------ |
+| `use_sn`                     | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
+| `prefix`                     | string | Specity a prefix to be used when creating entities                        |  ✅    |   ✅   |
+| `update_interval`            | time   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
+| `tolerate_stale_data`        | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |        |
 
 
 ## Available Entities
