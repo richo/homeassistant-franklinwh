@@ -152,8 +152,17 @@ Contributions are welcome! Please fork the repository and open a pull request:
 
 👉 https://github.com/richo/homeassistant-franklinwh
 
-License
+## 📄 License
 
-This project is dual-licensed under the MIT License and the Apache License 2.0.
+This project is dual-licensed under:
+- [MIT License](https://en.wikipedia.org/wiki/MIT_License)
+- [Apache License 2.0](https://www.apache.org/licenses/LICENSE-2.0)
 
 You may choose either license when using or contributing to this project.
+
+## 🙏 Contributors
+
+- [@richo](https://github.com/richo) for this integration and [library](https://github.com/richo/franklinwh-python)
+- [@JoshuaSeidel](https://github.com/JoshuaSeidel) for reworking Coordinator with dynamic sensors and switches
+- [@jkt628](https://github.com/jkt628) for async support, Grid Connection switch, and reconciliation
+- Many others
