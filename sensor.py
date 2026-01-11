@@ -1,10 +1,12 @@
 """Sensor platform for FranklinWH integration."""
+
 from __future__ import annotations
 
 from collections.abc import Callable
 from dataclasses import dataclass
 import logging
-from typing import Any
+
+from franklinwh.client import Stats
 
 from homeassistant.components.sensor import (
     SensorDeviceClass,
@@ -13,27 +15,23 @@ from homeassistant.components.sensor import (
     SensorStateClass,
 )
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    PERCENTAGE,
-    UnitOfEnergy,
-    UnitOfPower,
-)
+from homeassistant.const import PERCENTAGE, UnitOfEnergy, UnitOfPower
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.device_registry import DeviceInfo
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 from .const import CONF_GATEWAY_ID, DOMAIN, MANUFACTURER, MODEL
-from .coordinator import FranklinWHCoordinator, FranklinWHData
+from .coordinator import FranklinWHCoordinator
 
 _LOGGER = logging.getLogger(__name__)
 
 
-@dataclass
+@dataclass(frozen=True)
 class FranklinWHSensorEntityDescription(SensorEntityDescription):
     """Describes FranklinWH sensor entity."""
 
-    value_fn: Callable[[FranklinWHData], float | int | None] | None = None
+    value_fn: Callable[[Stats], float | int | None] | None = None
 
 
 SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
@@ -43,7 +41,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=PERCENTAGE,
         device_class=SensorDeviceClass.BATTERY,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.battery_soc if data.stats else None,
+        value_fn=lambda stats: stats.current.battery_soc,
     ),
     FranklinWHSensorEntityDescription(
         key="battery_use",
@@ -51,7 +49,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.battery_use * -1 if data.stats else None,
+        value_fn=lambda stats: stats.current.battery_use * -1,
     ),
     FranklinWHSensorEntityDescription(
         key="battery_charge",
@@ -59,7 +57,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.battery_charge if data.stats else None,
+        value_fn=lambda stats: stats.totals.battery_charge,
     ),
     FranklinWHSensorEntityDescription(
         key="battery_discharge",
@@ -67,7 +65,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.battery_discharge if data.stats else None,
+        value_fn=lambda stats: stats.totals.battery_discharge,
     ),
     FranklinWHSensorEntityDescription(
         key="battery_charge_from_grid",
@@ -75,11 +73,10 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: (
+        value_fn=lambda stats: (
             # Battery charged from grid = Total battery charge - Solar energy
             # (assuming all solar goes to battery first, excess goes to home/grid)
-            max(0, (data.stats.totals.battery_charge or 0) - (data.stats.totals.solar or 0))
-            if data.stats else None
+            max(0, (stats.totals.battery_charge or 0) - (stats.totals.solar or 0))
         ),
     ),
     FranklinWHSensorEntityDescription(
@@ -88,7 +85,15 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.home_load if data.stats else None,
+        value_fn=lambda stats: stats.current.home_load,
+    ),
+    FranklinWHSensorEntityDescription(
+        key="home_use",
+        name="Home Use",
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        value_fn=lambda stats: stats.totals.home_use,
     ),
     FranklinWHSensorEntityDescription(
         key="grid_use",
@@ -96,7 +101,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.grid_use * -1 if data.stats else None,
+        value_fn=lambda stats: stats.current.grid_use * -1,
     ),
     FranklinWHSensorEntityDescription(
         key="grid_import",
@@ -104,7 +109,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.grid_import if data.stats else None,
+        value_fn=lambda stats: stats.totals.grid_import,
     ),
     FranklinWHSensorEntityDescription(
         key="grid_export",
@@ -112,7 +117,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.grid_export if data.stats else None,
+        value_fn=lambda stats: stats.totals.grid_export,
     ),
     FranklinWHSensorEntityDescription(
         key="solar_production",
@@ -120,7 +125,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.solar_production if data.stats else None,
+        value_fn=lambda stats: stats.current.solar_production,
     ),
     FranklinWHSensorEntityDescription(
         key="solar_energy",
@@ -128,7 +133,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.solar if data.stats else None,
+        value_fn=lambda stats: stats.totals.solar,
     ),
     FranklinWHSensorEntityDescription(
         key="generator_use",
@@ -136,7 +141,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.generator_production if data.stats else None,
+        value_fn=lambda stats: stats.current.generator_production,
     ),
     FranklinWHSensorEntityDescription(
         key="generator_energy",
@@ -144,7 +149,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: data.stats.totals.generator if data.stats else None,
+        value_fn=lambda stats: stats.totals.generator,
     ),
     FranklinWHSensorEntityDescription(
         key="switch_1_load",
@@ -152,7 +157,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.switch_1_load if data.stats else None,
+        value_fn=lambda stats: stats.current.switch_1_load,
     ),
     FranklinWHSensorEntityDescription(
         key="switch_1_lifetime_use",
@@ -160,7 +165,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: (data.stats.totals.switch_1_use / 1000) if data.stats else None,
+        value_fn=lambda stats: (stats.totals.switch_1_use / 1000),
     ),
     FranklinWHSensorEntityDescription(
         key="switch_2_load",
@@ -168,7 +173,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.switch_2_load if data.stats else None,
+        value_fn=lambda stats: stats.current.switch_2_load,
     ),
     FranklinWHSensorEntityDescription(
         key="switch_2_lifetime_use",
@@ -176,7 +181,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: (data.stats.totals.switch_2_use / 1000) if data.stats else None,
+        value_fn=lambda stats: (stats.totals.switch_2_use / 1000),
     ),
     FranklinWHSensorEntityDescription(
         key="v2l_use",
@@ -184,7 +189,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER,
         state_class=SensorStateClass.MEASUREMENT,
-        value_fn=lambda data: data.stats.current.v2l_use if data.stats else None,
+        value_fn=lambda stats: stats.current.v2l_use,
     ),
     FranklinWHSensorEntityDescription(
         key="v2l_export",
@@ -192,7 +197,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: (data.stats.totals.v2l_export / 1000) if data.stats else None,
+        value_fn=lambda stats: (stats.totals.v2l_export / 1000),
     ),
     FranklinWHSensorEntityDescription(
         key="v2l_import",
@@ -200,7 +205,7 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         state_class=SensorStateClass.TOTAL_INCREASING,
-        value_fn=lambda data: (data.stats.totals.v2l_import / 1000) if data.stats else None,
+        value_fn=lambda stats: (stats.totals.v2l_import / 1000),
     ),
 )
 
@@ -254,11 +259,15 @@ class FranklinWHSensorEntity(CoordinatorEntity[FranklinWHCoordinator], SensorEnt
     @property
     def native_value(self) -> float | int | None:
         """Return the state of the sensor."""
-        if self.entity_description.value_fn is None:
+        if (
+            self.entity_description.value_fn is None
+            or self.coordinator.data is None
+            or self.coordinator.data.stats is None
+        ):
             return None
 
         try:
-            return self.entity_description.value_fn(self.coordinator.data)
+            return self.entity_description.value_fn(self.coordinator.data.stats)
         except (AttributeError, TypeError, KeyError) as err:
             _LOGGER.debug(
                 "Error getting value for %s: %s", self.entity_description.key, err
