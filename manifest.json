@@ -1,7 +1,8 @@
 {
   "domain": "franklin_wh",
   "name": "FranklinWH",
-  "codeowners": ["@richo"],
+  "config_flow": true,
+  "codeowners": ["@richo", "@JoshuaSeidel", "@jkt628"],
   "dependencies": [],
   "documentation": "https://github.com/richo/homeassistant-franklinwh/wiki",
   "iot_class": "cloud_polling",
