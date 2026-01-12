@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from franklinwh import AccessoryType, GridStatus
+from franklinwh import AccessoryType, GridStatus, SwitchState
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
@@ -100,24 +100,28 @@ class FranklinWHSmartSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEnti
 
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
-        switches = [None, None, None]
+        switches: list[bool | None] = [None, None, None]
         switches[self._switch_index] = True
 
         try:
-            await self.coordinator.async_set_switch_state(switches)
+            await self.coordinator.async_set_switch_state(SwitchState(switches))
         except Exception as err:
-            self.coordinator.logger.error("Failed to turn on switch %d: %s", self._switch_id + 1, err)
+            self.coordinator.logger.error(
+                "Failed to turn on switch %d: %s", self._switch_id + 1, err
+            )
             raise
 
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
-        switches = [None, None, None]
+        switches: list[bool | None] = [None, None, None]
         switches[self._switch_index] = False
 
         try:
-            await self.coordinator.async_set_switch_state(switches)
+            await self.coordinator.async_set_switch_state(SwitchState(switches))
         except Exception as err:
-            self.coordinator.logger.error("Failed to turn off switch %d: %s", self._switch_id + 1, err)
+            self.coordinator.logger.error(
+                "Failed to turn off switch %d: %s", self._switch_id + 1, err
+            )
             raise
 
     @property

@@ -5,8 +5,7 @@ from datetime import timedelta
 import logging
 from typing import TYPE_CHECKING, Any, Final
 
-from franklinwh import Client
-from franklinwh.client import Stats
+from franklinwh import Client, Stats, SwitchState
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -122,7 +121,7 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
         if method not in self._methods:
             self._methods.append(method)
 
-    async def async_set_switch_state(self, switches: tuple[bool, bool, bool]) -> None:
+    async def async_set_switch_state(self, switches: SwitchState) -> None:
         """Set the state of smart switches."""
         try:
             await self.client.set_smart_switch_state(switches)
