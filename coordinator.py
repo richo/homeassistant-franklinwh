@@ -117,3 +117,15 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
         for i, a in enumerate(self.attrs):
             if a == attr:
                 self._methods[i] = getattr(self.client, self._data[attr])
+
+    async def async_set_switch_state(self, switches: tuple[bool, bool, bool]) -> None:
+        """Set the state of smart switches."""
+        try:
+            await self.hass.async_add_executor_job(
+                self.client.set_smart_switch_state, switches
+            )
+            # Request immediate refresh
+            await self.async_request_refresh()
+        except Exception as err:
+            self.logger.error("Failed to set switch state: %s", err)
+            raise
