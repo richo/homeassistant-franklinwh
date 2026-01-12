@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING, Any, Final
 
 from franklinwh import Client, Stats, SwitchState
+from franklinwh.client import GridStatus
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -120,6 +121,17 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
         method = getattr(self.client, FranklinWHData._data[attr])  # noqa: SLF001
         if method not in self._methods:
             self._methods.append(method)
+
+    async def async_set_grid_status(self, status: GridStatus) -> None:
+        """Set the grid connection."""
+        try:
+            await self.client.set_grid_status(status)
+            # the system requires about 4 seconds to change so refresh after 7 seconds
+            await asyncio.sleep(7)
+            await self.async_request_refresh()
+        except Exception as err:
+            self.logger.error("Failed to set grid status: %s", err)
+            raise
 
     async def async_set_switch_state(self, switches: SwitchState) -> None:
         """Set the state of smart switches."""

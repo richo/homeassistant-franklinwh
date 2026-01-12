@@ -189,8 +189,7 @@ class GridSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEntity):
     async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the grid connection on."""
         try:
-            await self.coordinator.client.set_grid_status(GridStatus.NORMAL)
-            # TODO: the system takes a good while to switch states fully and reflect in the UI
+            await self.coordinator.async_set_grid_status(GridStatus.NORMAL)
         except Exception as err:
             self.coordinator.logger.error("Failed to turn on grid connection: %s", err)
             raise
@@ -198,8 +197,7 @@ class GridSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEntity):
     async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the grid connection off."""
         try:
-            await self.coordinator.client.set_grid_status(GridStatus.OFF)
-            # TODO: the system takes a good while to switch states fully and reflect in the UI
+            await self.coordinator.async_set_grid_status(GridStatus.OFF)
         except Exception as err:
             self.coordinator.logger.error("Failed to turn off grid connection: %s", err)
             raise
