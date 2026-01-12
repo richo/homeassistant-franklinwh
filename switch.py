@@ -1,161 +1,210 @@
-#!/usr/bin/env python
+"""Switch platform for FranklinWH integration."""
 
-import franklinwh
+from __future__ import annotations
 
-from homeassistant.components.switch import (
-    SwitchEntity,
-    PLATFORM_SCHEMA as PARENT_PLATFORM_SCHEMA,
-)
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
-from homeassistant.const import (
-        CONF_USERNAME,
-        CONF_PASSWORD,
-        CONF_ID,
-        CONF_NAME,
-        CONF_SWITCHES,
-        )
-from homeassistant.core import HomeAssistant, callback
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-
-from homeassistant.helpers.update_coordinator import (
-    CoordinatorEntity,
-    DataUpdateCoordinator,
-)
-
+import asyncio
 import logging
-_LOGGER = logging.getLogger(__name__)
-DEFAULT_UPDATE_INTERVAL = 30
+from typing import Any
 
-PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
-        {
-            vol.Required(CONF_USERNAME): cv.string,
-            vol.Required(CONF_PASSWORD): cv.string,
-            vol.Required(CONF_ID): cv.string,
-            vol.Required(CONF_NAME): cv.string,
-            vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
-            vol.Optional("use_sn", default=False): cv.boolean,
-            vol.Optional("prefix", default=False): cv.string,
-            vol.Optional("update_interval", default=DEFAULT_UPDATE_INTERVAL): cv.time_period,
-            }
+from franklinwh import AccessoryType, GridStatus
+
+from homeassistant.components.switch import SwitchEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.device_registry import DeviceInfo
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
+
+from .const import CONF_GATEWAY_ID, DOMAIN, MANUFACTURER, MODEL
+from .coordinator import FranklinWHCoordinator
+
+_LOGGER = logging.getLogger(__name__)
+
+
+async def async_setup_entry(
+    hass: HomeAssistant,
+    entry: ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
+) -> None:
+    """Set up FranklinWH switches."""
+    coordinator: FranklinWHCoordinator = hass.data[DOMAIN][entry.entry_id]
+    entities: list[SwitchEntity] = [GridSwitch(coordinator, entry)]
+
+    await coordinator.async_config_entry_first_refresh()
+    accessories = coordinator.client.get_accessories()
+    _LOGGER.debug("Accessories: %s", accessories)
+
+    for accessory in accessories:
+        try:
+            match accessory["accessoryType"]:
+                case AccessoryType.SMART_CIRCUIT_MODULE.value:
+                    entities.extend(
+                        FranklinWHSmartSwitch(coordinator, entry, switch_id)
+                        for switch_id in range(3)
+                    )
+        except KeyError as err:
+            _LOGGER.error("Expected key 'accessoryType' not found: %s", err)
+
+    async_add_entities(entities)
+
+
+class FranklinWHSmartSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEntity):
+    """Representation of a FranklinWH smart circuit switch."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: FranklinWHCoordinator,
+        entry: ConfigEntry,
+        switch_id: int,
+    ) -> None:
+        """Initialize the switch."""
+        super().__init__(coordinator)
+
+        self._switch_id = switch_id
+        self._switch_index = switch_id  # 0-indexed for API
+        gateway_id = entry.data[CONF_GATEWAY_ID]
+
+        # Set unique ID
+        self._attr_unique_id = f"{gateway_id}_switch_{switch_id + 1}"
+
+        # Set name
+        self._attr_name = f"Switch {switch_id + 1}"
+
+        # Set device info
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, gateway_id)},
+            name=f"FranklinWH {gateway_id[-6:]}",
+            manufacturer=MANUFACTURER,
+            model=MODEL,
+            sw_version=entry.data.get("sw_version"),
         )
 
-async def async_setup_platform(
-    hass: HomeAssistant,
-    config: ConfigType,
-    add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None
-) -> None:
-    """Set up the sensor platform."""
-    username: str = config[CONF_USERNAME]
-    password: str = config[CONF_PASSWORD]
-    gateway: str = config[CONF_ID]
-    name: str = config[CONF_NAME]
-    update_interval: timedelta = config["update_interval"]
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the switch is on."""
+        if self.coordinator.data is None or self.coordinator.data.switch_state is None:
+            return None
 
-    # TODO(richo) why does it string the default value
-    if config["use_sn"] and config["use_sn"] != "False":
-        unique_id = gateway
-    else:
-        unique_id = None
-
-    # TODO(richo) why does it string the default value
-    if config["prefix"] and config["prefix"] != "False":
-        prefix = config["prefix"]
-    else:
-        prefix = "FranklinWH"
-
-
-    switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
-
-    fetcher = franklinwh.TokenFetcher(username, password)
-    client = franklinwh.Client(fetcher, gateway)
-
-    async def _update_data():
-        _LOGGER.debug("Fetching latest switch data from FranklinWH...")
         try:
-            return await client.get_smart_switch_state()
-
-        except franklinwh.client.DeviceTimeoutException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Device Timeout: %s", e)
-        except franklinwh.client.GatewayOfflineException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Gateway Offline %s", e)
-        except franklinwh.client.AccountLockedException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Account Locked %s", e)
-        except franklinwh.client.InvalidCredentialsException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Invalid Credentials %s", e)
-
-    # TODO(richo) This should be memoized and shared among instances
-    coordinator = DataUpdateCoordinator(
-        hass,
-        _LOGGER,
-        name="franklinwh",
-        update_method=_update_data,
-        update_interval=update_interval,
-        always_update=False
-    )
-
-    # Initial fetch (If we don't kick this off manually, we'll get unavailable
-    # sensors until the first scheduled update).
-    await coordinator.async_refresh()
-
-    add_entities([
-        SmartCircuitSwitch(prefix, unique_id, name, switches, client, coordinator),
-        ])
-
-# Is it chill to have a switch in here? We'll see!
-class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
-    def __init__(self, prefix, unique_id, name, switches, client, coordinator):
-        super().__init__(coordinator)
-        self._is_on = False
-        self.switches = switches
-        self._attr_name = "{} {}".format(prefix, name)
-        self.client = client
-        self.coordinator = coordinator
-        if unique_id:
-            self._attr_has_entity_name = True
-            self._attr_unique_id = unique_id + "_" + name
+            return self.coordinator.data.switch_state[self._switch_index]
+        except (IndexError, TypeError):
+            return None
 
     @property
     def available(self) -> bool:
-        _LOGGER.debug("Checking for switch availability")
-        return self.coordinator.last_update_success and self.coordinator.data is not None
+        """Return if entity is available."""
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and self.coordinator.data.switch_state is not None
+        )
 
-    @callback
-    def _handle_coordinator_update(self) -> None:
-        state = self.coordinator.data
-        if state is None:
-            _LOGGER.warning("Corrdinator data was None")
-            # I think this should never happen, since it wouldn't be Available but here we are
-            return
-        values = list(map(lambda x: state[x], self.switches))
-        if all(values):
-            self._is_on = True
-        elif all(map(lambda x: x is False, values)):
-            self._is_on = False
-        else:
-            # Something's fucky!
-            self._is_on = None
-        self.async_write_ha_state()
-
-    @property
-    def is_on(self):
-        """If the switch is currently on or off."""
-        return self._is_on
-
-    async def async_turn_on(self, **kwargs):
+    async def async_turn_on(self, **kwargs: Any) -> None:
         """Turn the switch on."""
         switches = [None, None, None]
-        for i in self.switches:
-            switches[i] = True
-        await self.client.set_smart_switch_state(switches)
-        await self.coordinator.async_refresh()
+        switches[self._switch_index] = True
 
-    async def async_turn_off(self, **kwargs):
+        try:
+            await self.coordinator.async_set_switch_state(switches)
+        except Exception as err:
+            _LOGGER.error("Failed to turn on switch %d: %s", self._switch_id + 1, err)
+            raise
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
         """Turn the switch off."""
         switches = [None, None, None]
-        for i in self.switches:
-            switches[i] = False
-        await self.client.set_smart_switch_state(switches)
-        await self.coordinator.async_refresh()
+        switches[self._switch_index] = False
+
+        try:
+            await self.coordinator.async_set_switch_state(switches)
+        except Exception as err:
+            _LOGGER.error("Failed to turn off switch %d: %s", self._switch_id + 1, err)
+            raise
+
+    @property
+    def icon(self) -> str:
+        """Return the icon for the switch."""
+        if self.is_on:
+            return "mdi:electric-switch-closed"
+        return "mdi:electric-switch"
+
+
+class GridSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEntity):
+    """Representation of the grid connection switch."""
+
+    _attr_has_entity_name = True
+
+    def __init__(
+        self,
+        coordinator: FranklinWHCoordinator,
+        entry: ConfigEntry,
+    ) -> None:
+        """Initialize the grid switch."""
+        super().__init__(coordinator)
+
+        gateway_id = entry.data[CONF_GATEWAY_ID]
+
+        # Set unique ID
+        self._attr_unique_id = f"{gateway_id}_grid_switch"
+
+        # Set name
+        self._attr_name = "Grid Connection"
+
+        # Set device info
+        self._attr_device_info = DeviceInfo(
+            identifiers={(DOMAIN, gateway_id)},
+            name=f"FranklinWH {gateway_id[-6:]}",
+            manufacturer=MANUFACTURER,
+            model=MODEL,
+            sw_version=entry.data.get("sw_version"),
+        )
+
+    @property
+    def is_on(self) -> bool | None:
+        """Return true if the grid connection is on."""
+        if self.coordinator.data is None or self.coordinator.data.stats is None:
+            return None
+
+        match self.coordinator.data.stats.current.grid_status:
+            case GridStatus.NORMAL:
+                return True
+            case GridStatus.OFF:
+                return False
+            case _:
+                return None
+
+    @property
+    def available(self) -> bool:
+        """Return if entity is available."""
+        return (
+            super().available
+            and self.coordinator.data is not None
+            and self.coordinator.data.stats is not None
+            and self.coordinator.data.stats.current.grid_status is not None
+        )
+
+    async def async_turn_on(self, **kwargs: Any) -> None:
+        """Turn the grid connection on."""
+        try:
+            self.coordinator.client.set_grid_status(GridStatus.NORMAL)
+        except Exception as err:
+            _LOGGER.error("Failed to turn on grid connection: %s", err)
+            raise
+
+    async def async_turn_off(self, **kwargs: Any) -> None:
+        """Turn the grid connection off."""
+        try:
+            self.coordinator.client.set_grid_status(GridStatus.OFF)
+        except Exception as err:
+            _LOGGER.error("Failed to turn off grid connection: %s", err)
+            raise
+        asyncio.create_task(self.coordinator.async_request_refresh())  # noqa: RUF006
+
+    @property
+    def icon(self) -> str:
+        """Return the icon for the switch."""
+        if self.is_on:
+            return "mdi:transmission-tower"
+        return "mdi:transmission-tower-off"
