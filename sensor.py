@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass
 import logging
 
+from franklinwh import AccessoryType
 from franklinwh.client import Stats
 
 from homeassistant.components.sensor import (
@@ -34,7 +35,7 @@ class FranklinWHSensorEntityDescription(SensorEntityDescription):
     value_fn: Callable[[Stats], float | int | None] | None = None
 
 
-SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
+GENERIC_SENSORS: tuple[FranklinWHSensorEntityDescription, ...] = (
     FranklinWHSensorEntityDescription(
         key="battery_soc",
         name="State of Charge",
@@ -135,6 +136,8 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=lambda stats: stats.totals.solar,
     ),
+)
+GENERATOR_SENSORS: tuple[FranklinWHSensorEntityDescription, ...] = (
     FranklinWHSensorEntityDescription(
         key="generator_use",
         name="Generator Use",
@@ -151,6 +154,8 @@ SENSOR_TYPES: tuple[FranklinWHSensorEntityDescription, ...] = (
         state_class=SensorStateClass.TOTAL_INCREASING,
         value_fn=lambda stats: stats.totals.generator,
     ),
+)
+SMART_CIRCUIT_SENSORS: tuple[FranklinWHSensorEntityDescription, ...] = (
     FranklinWHSensorEntityDescription(
         key="switch_1_load",
         name="Switch 1 Load",
@@ -215,13 +220,29 @@ async def async_setup_entry(
     entry: ConfigEntry,
     async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up FranklinWH sensor based on a config entry."""
+    """Set up FranklinWH sensors."""
     coordinator: FranklinWHCoordinator = hass.data[DOMAIN][entry.entry_id]
 
-    entities = [
-        FranklinWHSensorEntity(coordinator, description, entry)
-        for description in SENSOR_TYPES
-    ]
+    def _entities(
+        descriptions: Iterable[FranklinWHSensorEntityDescription],
+    ) -> Iterator[FranklinWHSensorEntity]:
+        for description in descriptions:
+            yield FranklinWHSensorEntity(coordinator, description, entry)
+
+    entities = list(_entities(GENERIC_SENSORS))
+
+    accessories = await coordinator.client.get_accessories()
+    coordinator.logger.debug("Accessories: %s", accessories)
+
+    for accessory in accessories:
+        try:
+            match accessory["accessoryType"]:
+                case AccessoryType.SMART_CIRCUIT_MODULE.value:
+                    entities.extend(_entities(SMART_CIRCUIT_SENSORS))
+                case AccessoryType.GENERATOR_MODULE.value:
+                    entities.extend(_entities(GENERATOR_SENSORS))
+        except KeyError as err:
+            coordinator.logger.error("Expected key 'accessoryType' not found: %s", err)
 
     async_add_entities(entities)
 
