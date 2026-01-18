@@ -119,6 +119,17 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
             if a == attr:
                 self._methods[i] = getattr(self.client, self._data[attr])
 
+    async def async_set_generator(self, enabled: bool) -> None:
+        """Set the generator."""
+        try:
+            await self.client.set_generator(enabled)
+            # the system requires about 4 seconds to change so refresh after 7 seconds
+            await asyncio.sleep(7)
+            await self.async_request_refresh()
+        except Exception as err:
+            self.logger.error("Failed to set generator: %s", err)
+            raise
+
     async def async_set_grid_status(self, status: GridStatus) -> None:
         """Set the grid connection."""
         try:
