@@ -143,6 +143,7 @@ async def async_setup_platform(
         HomeLoadSensor(coordinator, prefix, unique_id),
         BatteryUseSensor(coordinator, prefix, unique_id),
         GridUseSensor(coordinator, prefix, unique_id),
+        GridStatusSensor(coordinator, prefix, unique_id),
         SolarProductionSensor(coordinator, prefix, unique_id),
         BatteryChargeSensor(coordinator, prefix, unique_id),
         BatteryDischargeSensor(coordinator, prefix, unique_id),
@@ -226,6 +227,19 @@ class GridUseSensor(FranklinSensor):
     @property
     def native_value(self):
         return self.coordinator.data.current.grid_use
+
+class GridStatusSensor(FranklinSensor):
+    """Shows the current status of the grid"""
+
+    _attr_device_class = SensorDeviceClass.ENUM
+    _attr_options = [status.name for status in franklinwh.GridStatus]
+
+    def __init__(self, coordinator, prefix, unique_id):
+        super().__init__(coordinator, prefix, unique_id, "_grid_status")
+
+    @property
+    def native_value(self):
+        return self.coordinator.data.current.grid_status.name
 
 class GridImportSensor(FranklinSensor):
     """Shows the amount of energy imported from the grid"""
