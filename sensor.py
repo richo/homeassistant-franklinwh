@@ -141,6 +141,7 @@ async def async_setup_platform(
     async_add_entities([
         FranklinBatterySensor(coordinator, prefix, unique_id),
         HomeLoadSensor(coordinator, prefix, unique_id),
+        HomeUseSensor(coordinator, prefix, unique_id),
         BatteryUseSensor(coordinator, prefix, unique_id),
         GridUseSensor(coordinator, prefix, unique_id),
         GridStatusSensor(coordinator, prefix, unique_id),
