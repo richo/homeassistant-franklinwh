@@ -105,6 +105,7 @@ After updating your configuration, restart Home Assistant to apply the changes.
 | FranklinWH Battery Charge           | Total energy charged to battery           | kWh       |
 | FranklinWH Battery Discharge        | Total energy discharged from battery      | kWh       |
 | FranklinWH Home Load                | Instantaneous home power use              | kW        |
+| FranklinWH Home Use                 | Total energy consumed by home             | kWh       |
 | FranklinWH Grid Use                 | Net grid power usage                      | kW        |
 | FranklinWH Grid Import              | Total energy imported from grid           | kWh       |
 | FranklinWH Grid Export              | Total energy exported to grid             | kWh       |
