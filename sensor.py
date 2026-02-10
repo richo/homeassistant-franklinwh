@@ -1,7 +1,6 @@
 from __future__ import annotations
 from datetime import timedelta
 import logging
-import random
 import asyncio as  asyncio
 
 import franklinwh
@@ -16,7 +15,6 @@ from homeassistant.components.sensor import (
     SensorEntity,
     SensorStateClass,
 )
-from homeassistant.components.switch import SwitchEntity
 from homeassistant.const import (
         UnitOfPower,
         UnitOfEnergy,
@@ -29,7 +27,6 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
@@ -37,13 +34,14 @@ from homeassistant.helpers.update_coordinator import (
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_UPDATE_INTERVAL = 30
+DOMAIN = "franklin_wh"
+
 
 PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
         {
             vol.Required(CONF_USERNAME): cv.string,
             vol.Required(CONF_PASSWORD): cv.string,
             vol.Required(CONF_ID): cv.string,
-            vol.Optional("use_sn", default=False): cv.boolean,
             vol.Optional("prefix", default=False): cv.string,
             vol.Optional("update_interval", default=DEFAULT_UPDATE_INTERVAL): cv.time_period,
             vol.Optional("tolerate_stale_data", default=False): cv.boolean,
@@ -75,11 +73,7 @@ async def async_setup_platform(
     gateway: str = config[CONF_ID]
     update_interval: timedelta = config["update_interval"]
 
-    # TODO(richo) why does it string the default value
-    if config["use_sn"] and config["use_sn"] != "False":
-        unique_id = gateway
-    else:
-        unique_id = None
+    unique_id = gateway
 
     # TODO(richo) why does it string the default value
     if config["prefix"] and config["prefix"] != "False":
@@ -138,6 +132,11 @@ async def async_setup_platform(
     # sensors until the first scheduled update).
     await coordinator.async_refresh()
 
+    hass.data.setdefault(DOMAIN, {})
+    hass.data[DOMAIN][gateway] = {
+        "client": client,
+    }
+
     async_add_entities([
         FranklinBatterySensor(coordinator, prefix, unique_id),
         HomeLoadSensor(coordinator, prefix, unique_id),
@@ -168,6 +167,11 @@ class FranklinSensor(CoordinatorEntity, SensorEntity):
         if unique_id_suffix and unique_id:
             self._attr_has_entity_name = True
             self._attr_unique_id = unique_id + unique_id_suffix
+        self._attr_device_info = {
+            "identifiers": {(DOMAIN, unique_id)},
+            "name": prefix,
+            "manufacturer": "FranklinWH",
+        }
 
     @property
     def available(self) -> bool:
@@ -227,7 +231,7 @@ class GridUseSensor(FranklinSensor):
 
     @property
     def native_value(self):
-        return self.coordinator.data.current.grid_use
+        return self.coordinator.data.current.grid_use * -1
 
 class GridStatusSensor(FranklinSensor):
     """Shows the current status of the grid"""
@@ -310,7 +314,7 @@ class BatteryUseSensor(FranklinSensor):
 
     @property
     def native_value(self):
-        return self.coordinator.data.current.battery_use
+        return self.coordinator.data.current.battery_use * -1
 
 
 class BatteryChargeSensor(FranklinSensor):
@@ -357,6 +361,8 @@ class GeneratorUseSensor(FranklinSensor):
 
 class GeneratorEnergySensor(FranklinSensor):
     """Shows the energy imported from the generator"""
+
+
 
     _attr_native_unit_of_measurement = UnitOfEnergy.KILO_WATT_HOUR
     _attr_device_class = SensorDeviceClass.ENERGY

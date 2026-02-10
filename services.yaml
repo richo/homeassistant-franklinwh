@@ -1,0 +1,33 @@
+# Services for FranklinWH integration
+
+set_mode:
+  name: Set Mode
+  description: Set the FranklinWH system operation mode.
+  fields:
+    entity_id:
+      name: Entity
+      description: An entity from the FranklinWH device to target (e.g. the battery sensor).
+      required: true
+      selector:
+        entity:
+          integration: franklin_wh
+    mode:
+      name: Mode
+      description: The desired operating mode.
+      required: true
+      selector:
+        select:
+          options:
+            - "Self Consumption"
+            - "Time of Use"
+            - "Emergency Backup"
+    soc:
+      name: State of Charge
+      description: Target state of charge percentage (optional, uses default of 20% or 100% for backup).
+      required: false
+      example: 20
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
