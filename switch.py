@@ -34,6 +34,7 @@ async def async_setup_entry(
             match accessory["accessoryType"]:
                 case AccessoryType.SMART_CIRCUIT_MODULE.value:
                     coordinator.enable("switch_state")
+                    await coordinator.async_config_entry_first_refresh()
                     entities.extend(
                         FranklinWHSmartSwitch(coordinator, entry, switch_id)
                         for switch_id in range(3)
@@ -87,7 +88,7 @@ class FranklinWHSmartSwitch(CoordinatorEntity[FranklinWHCoordinator], SwitchEnti
 
         try:
             return self.coordinator.data.switch_state[self._switch_index]
-        except (IndexError, TypeError):
+        except IndexError, TypeError:
             return None
 
     @property

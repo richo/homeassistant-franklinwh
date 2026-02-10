@@ -6,8 +6,7 @@ from datetime import timedelta
 import logging
 from typing import Any, Final
 
-from franklinwh import Client, Stats, SwitchState
-from franklinwh.client import GridStatus
+from franklinwh import Client, GridStatus, Mode, Stats, SwitchState
 
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryAuthFailed
@@ -22,6 +21,7 @@ class FranklinWHData:
 
     stats: Stats | None = None
     switch_state: SwitchState | None = None
+    mode: Mode | None = None
 
 
 class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
@@ -33,6 +33,7 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
     _data: Final = {
         "stats": "get_stats",
         "switch_state": "get_smart_switch_state",
+        "mode": "get_mode",
     }
     attrs: Final = [field.name for field in fields(FranklinWHData)]
     assert len(_data) == len(attrs)
@@ -143,4 +144,14 @@ class FranklinWHCoordinator(DataUpdateCoordinator[FranklinWHData]):
         """Set the state of smart switches."""
         await self.async_set(
             self.client.set_smart_switch_state, switches, value="switch state", sleep=1
+        )
+
+    async def async_set_mode(self, name: str) -> None:
+        """Set the operating mode."""
+        await self.async_set(self.client.set_mode, Mode.get_by_name(name), value="mode")
+
+    async def async_set_backup_reserve(self, soc: int) -> None:
+        """Set the backup reserve."""
+        await self.async_set(
+            self.client.set_backup_reserve, soc, value="backup reserve"
         )

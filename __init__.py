@@ -13,7 +13,12 @@ from .const import CONF_GATEWAY_ID, CONF_LOCAL_HOST, CONF_USE_LOCAL_API, DOMAIN
 from .coordinator import FranklinWHCoordinator
 from .utils import get_client
 
-PLATFORMS: list[Platform] = [Platform.SENSOR, Platform.SWITCH]
+PLATFORMS: list[Platform] = [
+    Platform.NUMBER,
+    Platform.SELECT,
+    Platform.SENSOR,
+    Platform.SWITCH,
+]
 
 
 async def async_setup_entry(hass: HomeAssistant, entry: ConfigEntry) -> bool:
