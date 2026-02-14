@@ -7,6 +7,7 @@ from datetime import timedelta
 import logging
 
 import franklinwh
+import httpx
 import voluptuous as vol
 
 from homeassistant.components.sensor import (
@@ -22,6 +23,7 @@ from homeassistant.const import (
     PERCENTAGE,
     UnitOfEnergy,
     UnitOfPower,
+    __short_version__,
 )
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
@@ -97,7 +99,21 @@ async def async_setup_platform(
         prefix = "FranklinWH"
 
     fetcher = franklinwh.TokenFetcher(username, password)
-    client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
+    if __short_version__ >= "2026.2":
+        # pylint: disable=no-name-in-module,import-outside-toplevel
+        from homeassistant.helpers.httpx_client import (  # noqa: PLC0415
+            SSL_ALPN_HTTP11_HTTP2,  # type: ignore  # noqa: PGH003
+            create_async_httpx_client,
+        )
+        # pylint: enable=no-name-in-module,import-outside-toplevel
+
+        def get_client() -> httpx.AsyncClient:
+            return create_async_httpx_client(hass, alpn_protocols=SSL_ALPN_HTTP11_HTTP2)
+
+        franklinwh.HttpClientFactory.set_client_factory(get_client)
+        client = franklinwh.Client(fetcher, gateway)
+    else:
+        client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
 
     cache = StaleDataCache()
 
