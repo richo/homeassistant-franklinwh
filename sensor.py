@@ -7,6 +7,7 @@ from datetime import timedelta
 import logging
 
 import franklinwh
+import httpx
 import voluptuous as vol
 
 from homeassistant.components.sensor import (
@@ -26,6 +27,10 @@ from homeassistant.const import (
 from homeassistant.core import HomeAssistant
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.httpx_client import (
+    SSL_ALPN_HTTP11_HTTP2,
+    create_async_httpx_client,
+)
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
@@ -96,8 +101,12 @@ async def async_setup_platform(
     else:
         prefix = "FranklinWH"
 
+    def get_client() -> httpx.AsyncClient:
+        return create_async_httpx_client(hass, alpn_protocols=SSL_ALPN_HTTP11_HTTP2)
+
+    franklinwh.HttpClientFactory.set_client_factory(get_client)
     fetcher = franklinwh.TokenFetcher(username, password)
-    client = await hass.async_add_executor_job(franklinwh.Client, fetcher, gateway)
+    client = franklinwh.Client(fetcher, gateway)
 
     cache = StaleDataCache()
 
