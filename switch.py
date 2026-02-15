@@ -1,51 +1,57 @@
-#!/usr/bin/env python
+"""Switch platform for FranklinWH."""
+
+from datetime import timedelta
+import logging
 
 import franklinwh
+from franklinwh import SwitchState
+import voluptuous as vol
 
 from homeassistant.components.switch import (
+    PLATFORM_SCHEMA as SWITCH_PLATFORM_SCHEMA,
     SwitchEntity,
-    PLATFORM_SCHEMA as PARENT_PLATFORM_SCHEMA,
 )
-import voluptuous as vol
-import homeassistant.helpers.config_validation as cv
 from homeassistant.const import (
-        CONF_USERNAME,
-        CONF_PASSWORD,
-        CONF_ID,
-        CONF_NAME,
-        CONF_SWITCHES,
-        )
+    CONF_ID,
+    CONF_NAME,
+    CONF_PASSWORD,
+    CONF_SWITCHES,
+    CONF_USERNAME,
+)
 from homeassistant.core import HomeAssistant, callback
+import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
-
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
+    UpdateFailed,
 )
 
-import logging
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_UPDATE_INTERVAL = 30
 
-PLATFORM_SCHEMA = PARENT_PLATFORM_SCHEMA.extend(
-        {
-            vol.Required(CONF_USERNAME): cv.string,
-            vol.Required(CONF_PASSWORD): cv.string,
-            vol.Required(CONF_ID): cv.string,
-            vol.Required(CONF_NAME): cv.string,
-            vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
-            vol.Optional("use_sn", default=False): cv.boolean,
-            vol.Optional("prefix", default=False): cv.string,
-            vol.Optional("update_interval", default=DEFAULT_UPDATE_INTERVAL): cv.time_period,
-            }
-        )
+PLATFORM_SCHEMA = SWITCH_PLATFORM_SCHEMA.extend(
+    {
+        vol.Required(CONF_USERNAME): cv.string,
+        vol.Required(CONF_PASSWORD): cv.string,
+        vol.Required(CONF_ID): cv.string,
+        vol.Required(CONF_NAME): cv.string,
+        vol.Required(CONF_SWITCHES): cv.ensure_list(vol.In([1, 2, 3])),
+        vol.Optional("use_sn", default=False): cv.boolean,
+        vol.Optional("prefix", default=False): cv.string,
+        vol.Optional(
+            "update_interval", default=DEFAULT_UPDATE_INTERVAL
+        ): cv.time_period,
+    }
+)
+
 
 async def async_setup_platform(
     hass: HomeAssistant,
     config: ConfigType,
     add_entities: AddEntitiesCallback,
-    discovery_info: DiscoveryInfoType | None = None
+    discovery_info: DiscoveryInfoType | None = None,
 ) -> None:
     """Set up the sensor platform."""
     username: str = config[CONF_USERNAME]
@@ -66,51 +72,63 @@ async def async_setup_platform(
     else:
         prefix = "FranklinWH"
 
-
-    switches: list[int] = list(map(lambda x: x-1, config[CONF_SWITCHES]))
+    switches: list[int] = [x - 1 for x in config[CONF_SWITCHES]]
 
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
 
-    async def _update_data():
-        _LOGGER.debug("Fetching latest switch data from FranklinWH...")
+    async def _update_data() -> SwitchState:
+        _LOGGER.debug("Fetching latest switch data from FranklinWH")
         try:
             return await client.get_smart_switch_state()
 
         except franklinwh.client.DeviceTimeoutException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Device Timeout: %s", e)
+            _LOGGER.warning(
+                "Error getting data from FranklinWH - Device Timeout: %s", e
+            )
         except franklinwh.client.GatewayOfflineException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Gateway Offline %s", e)
+            _LOGGER.warning(
+                "Error getting data from FranklinWH - Gateway Offline %s", e
+            )
         except franklinwh.client.AccountLockedException as e:
             _LOGGER.warning("Error getting data from FranklinWH - Account Locked %s", e)
         except franklinwh.client.InvalidCredentialsException as e:
-            _LOGGER.warning("Error getting data from FranklinWH - Invalid Credentials %s", e)
+            _LOGGER.warning(
+                "Error getting data from FranklinWH - Invalid Credentials %s", e
+            )
+
+        raise UpdateFailed("Error fetching switch state from FranklinWH")
 
     # TODO(richo) This should be memoized and shared among instances
-    coordinator = DataUpdateCoordinator(
+    coordinator = DataUpdateCoordinator[SwitchState](
         hass,
         _LOGGER,
         name="franklinwh",
         update_method=_update_data,
         update_interval=update_interval,
-        always_update=False
+        always_update=False,
     )
 
     # Initial fetch (If we don't kick this off manually, we'll get unavailable
     # sensors until the first scheduled update).
     await coordinator.async_refresh()
 
-    add_entities([
-        SmartCircuitSwitch(prefix, unique_id, name, switches, client, coordinator),
-        ])
+    add_entities(
+        [
+            SmartCircuitSwitch(prefix, unique_id, name, switches, client, coordinator),
+        ]
+    )
+
 
 # Is it chill to have a switch in here? We'll see!
 class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
-    def __init__(self, prefix, unique_id, name, switches, client, coordinator):
+    """Representation of a FranklinWH Smart Circuit Module switch."""
+    def __init__(self, prefix, unique_id, name, switches, client, coordinator) -> None:
+        """Initialize the switch."""
         super().__init__(coordinator)
         self._is_on = False
         self.switches = switches
-        self._attr_name = "{} {}".format(prefix, name)
+        self._attr_name = f"{prefix} {name}"
         self.client = client
         self.coordinator = coordinator
         if unique_id:
@@ -119,20 +137,23 @@ class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
 
     @property
     def available(self) -> bool:
+        """Available?"""
         _LOGGER.debug("Checking for switch availability")
-        return self.coordinator.last_update_success and self.coordinator.data is not None
+        return (
+            self.coordinator.last_update_success and self.coordinator.data is not None
+        )
 
     @callback
     def _handle_coordinator_update(self) -> None:
         state = self.coordinator.data
         if state is None:
-            _LOGGER.warning("Corrdinator data was None")
+            _LOGGER.warning("Coordinator data was None")
             # I think this should never happen, since it wouldn't be Available but here we are
             return
-        values = list(map(lambda x: state[x], self.switches))
+        values = [state[x] for x in self.switches]
         if all(values):
             self._is_on = True
-        elif all(map(lambda x: x is False, values)):
+        elif all(x is False for x in values):
             self._is_on = False
         else:
             # Something's fucky!
@@ -146,7 +167,7 @@ class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_on(self, **kwargs):
         """Turn the switch on."""
-        switches = [None, None, None]
+        switches: list[bool | None] = [None, None, None]
         for i in self.switches:
             switches[i] = True
         await self.client.set_smart_switch_state(switches)
@@ -154,7 +175,7 @@ class SmartCircuitSwitch(CoordinatorEntity, SwitchEntity):
 
     async def async_turn_off(self, **kwargs):
         """Turn the switch off."""
-        switches = [None, None, None]
+        switches: list[bool | None] = [None, None, None]
         for i in self.switches:
             switches[i] = False
         await self.client.set_smart_switch_state(switches)
