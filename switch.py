@@ -4,6 +4,7 @@ from datetime import timedelta
 import logging
 
 import franklinwh
+from franklinwh import SwitchState
 import voluptuous as vol
 
 from homeassistant.components.switch import (
@@ -24,6 +25,7 @@ from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
 from homeassistant.helpers.update_coordinator import (
     CoordinatorEntity,
     DataUpdateCoordinator,
+    UpdateFailed,
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -75,7 +77,7 @@ async def async_setup_platform(
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
 
-    async def _update_data():
+    async def _update_data() -> SwitchState:
         _LOGGER.debug("Fetching latest switch data from FranklinWH")
         try:
             return await client.get_smart_switch_state()
@@ -95,8 +97,10 @@ async def async_setup_platform(
                 "Error getting data from FranklinWH - Invalid Credentials %s", e
             )
 
+        raise UpdateFailed("Error fetching switch state from FranklinWH")
+
     # TODO(richo) This should be memoized and shared among instances
-    coordinator = DataUpdateCoordinator(
+    coordinator = DataUpdateCoordinator[SwitchState](
         hass,
         _LOGGER,
         name="franklinwh",
