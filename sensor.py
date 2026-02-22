@@ -168,6 +168,7 @@ async def async_setup_platform(
         )
 
         if config["tolerate_stale_data"] and cache.is_populated():
+            _LOGGER.info("Fetching stale data from cache")
             return cache.data()
 
         raise UpdateFailed(
