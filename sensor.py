@@ -24,6 +24,8 @@ from homeassistant.const import (
         CONF_USERNAME,
         CONF_PASSWORD,
         CONF_ID,
+        MAJOR_VERSION as HASS_MAJOR_VERSION,
+        MINOR_VERSION as HASS_MINOR_VERSION,
         )
 
 from homeassistant.core import HomeAssistant
