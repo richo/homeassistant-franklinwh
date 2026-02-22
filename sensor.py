@@ -75,6 +75,13 @@ class StaleDataCache:
         assert self.last_data is not None, "Cache is not populated"
         return self.last_data
 
+def supports_http2() -> bool:
+    if HASS_MAJOR_VERSION > 2026:
+        return True
+    elif HASS_MAJOR_VERSION == 2026 and HASS_MINOR_VERSION >= 2:
+        return True
+    return False
+
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -101,7 +108,7 @@ async def async_setup_platform(
         prefix = "FranklinWH"
 
     fetcher = franklinwh.TokenFetcher(username, password)
-    if __short_version__ >= "2026.2":
+    if supports_http2():
         # pylint: disable=no-name-in-module,import-outside-toplevel
         from homeassistant.helpers.httpx_client import (  # noqa: PLC0415
             SSL_ALPN_HTTP11_HTTP2,  # type: ignore  # noqa: PGH003
