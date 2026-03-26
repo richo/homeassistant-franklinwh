@@ -153,6 +153,10 @@ async def async_setup_platform(
                 _LOGGER.warning(
                     "Error getting data from FranklinWH - Invalid Credentials %s", e
                 )
+            except franklinwh.client.InvalidDataException as e:
+                _LOGGER.warning(
+                    "Error getting data from FranklinWH - Invalid Body Returned %s", e
+                )
             except httpx.ReadTimeout as e:
                 _LOGGER.warning(
                     "Timeout fetching data from FranklinWH: %s", e
