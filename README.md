@@ -54,7 +54,14 @@ sensor:
     username: "email@domain.com"
     password: !secret franklinwh_password
     id: "100xxxxxxxxxxxx"
+    tolerate_stale_data: true
 ```
+
+The `tolerate_stale_data` key is not required, but is recommended. The
+FranklinWH API often fails to return valid data, that flag will persist the
+last good data until it's able to fetch more, substantially smoothing out the
+graphs. However, if accuracy is more important to you than consistency, you
+should not enable that flag.
 
 ### Smart Relays
 
