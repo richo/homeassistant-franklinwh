@@ -16,6 +16,7 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 - Generator and home load insights
 - Switch load and usage tracking
 - Support for V2L (Vehicle-to-Load) data
+- **Operating mode control** — switch between Time of Use, Self Consumption, and Emergency Backup
 
 ---
 
@@ -63,6 +64,33 @@ last good data until it's able to fetch more, substantially smoothing out the
 graphs. However, if accuracy is more important to you than consistency, you
 should not enable that flag.
 
+### Operating Mode
+
+The integration can expose an **Operating Mode** select entity that lets you switch your Agate between its three operating modes directly from Home Assistant — no app required.
+
+```yaml
+select:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    tou_reserve_pct: 20            # optional — battery reserve % for Time of Use
+    self_consumption_reserve_pct: 20  # optional — battery reserve % for Self Consumption
+    emergency_backup_reserve_pct: 100 # optional — battery reserve % for Emergency Backup
+```
+
+This creates a single `select` entity — **FranklinWH Operating Mode** — with three options:
+
+| Option | Description |
+|--------|-------------|
+| `Time of Use` | Optimises for time-of-use electricity tariffs |
+| `Self Consumption` | Maximises use of solar / stored energy |
+| `Emergency Backup` | Keeps battery as full as possible for outage protection |
+
+When switching modes the battery reserve is set to the value configured above. The defaults match the FranklinWH app defaults (20 % for Time of Use / Self Consumption, 100 % for Emergency Backup). Set these to match your preferred reserves so they are preserved when switching modes from Home Assistant.
+
+You can use this entity in automations, scripts, or Lovelace dashboards. For example, to automatically switch to Emergency Backup when a storm warning is issued, or back to Time of Use on a schedule.
+
 ### Smart Relays
 
 The integration can also manage smart relays, if you have them installed in your gateway. It is
@@ -95,12 +123,15 @@ After updating your configuration, restart Home Assistant to apply the changes.
 
 ### Advanced Configuration
 
-| Configuration Option         | Unit   | Description                                                               | sensor | switch |
-| ---------------------------- | ------ | --------------------------------------------------------------------------| ------ | ------ |
-| `use_sn`                     | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
-| `prefix`                     | string | Specity a prefix to be used when creating entities                        |  ✅    |   ✅   |
-| `update_interval`            | time   | Period to update entities from franklinwh. Default 30s                    |  ✅    |   ✅   |
-| `tolerate_stale_data`        | bool   | Continue to show stale data on the dashboard for one cycle instead of showing the sensor unavailable                   |  ✅    |        |
+| Configuration Option              | Unit   | Description                                                                                              | sensor | switch | select |
+| --------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------| ------ | ------ | ------ |
+| `use_sn`                          | bool   | Use the gateway's SN as a prefix when creating entities                                                  |  ✅    |   ✅   |   ✅   |
+| `prefix`                          | string | Specify a prefix to be used when creating entities                                                       |  ✅    |   ✅   |   ✅   |
+| `update_interval`                 | time   | Period to update entities from franklinwh. Default 30s                                                   |  ✅    |   ✅   |   ✅   |
+| `tolerate_stale_data`             | bool   | Continue to show stale data on the dashboard for one cycle instead of showing the sensor unavailable     |  ✅    |        |        |
+| `tou_reserve_pct`                 | int    | Battery reserve % to set when switching to Time of Use. Default 20                                       |        |        |   ✅   |
+| `self_consumption_reserve_pct`    | int    | Battery reserve % to set when switching to Self Consumption. Default 20                                  |        |        |   ✅   |
+| `emergency_backup_reserve_pct`    | int    | Battery reserve % to set when switching to Emergency Backup. Default 100                                 |        |        |   ✅   |
 
 
 ## Available Entities
@@ -127,6 +158,12 @@ After updating your configuration, restart Home Assistant to apply the changes.
 | FranklinWH V2L Use                  | Power use via Vehicle-to-Load             | W         |
 | FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
 | FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
+
+### Select Entities
+
+| Entity Name                          | Description                               | Options                                                  |
+|--------------------------------------|-------------------------------------------|----------------------------------------------------------|
+| FranklinWH Operating Mode           | Current operating mode (read + write)     | Time of Use, Self Consumption, Emergency Backup          |
 
 # Flipping sensors
 
