@@ -123,7 +123,7 @@ After updating your configuration, restart Home Assistant to apply the changes.
 
 | Configuration Option              | Unit   | Description                                                                                              | sensor | switch | select |
 | --------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------| ------ | ------ | ------ |
-| `use_sn`                          | bool   | Use the gateway's SN as a prefix when creating entities                                                  |  ✅    |   ✅   |   ✅   |
+| `use_sn`                          | bool   | Use the gateway's SN as a prefix when creating entities                                                  |  ✅    |   ✅   |        |
 | `prefix`                          | string | Specify a prefix to be used when creating entities                                                       |  ✅    |   ✅   |   ✅   |
 | `update_interval`                 | time   | Period to update entities from franklinwh. Default 30s                                                   |  ✅    |   ✅   |   ✅   |
 | `tolerate_stale_data`             | bool   | Continue to show stale data on the dashboard for one cycle instead of showing the sensor unavailable     |  ✅    |        |        |

@@ -36,7 +36,6 @@ PLATFORM_SCHEMA = SELECT_PLATFORM_SCHEMA.extend(
         vol.Required(CONF_USERNAME): cv.string,
         vol.Required(CONF_PASSWORD): cv.string,
         vol.Required(CONF_ID): cv.string,
-        vol.Optional("use_sn", default=False): cv.boolean,
         vol.Optional("prefix", default=False): cv.string,
         vol.Optional(
             "update_interval", default=DEFAULT_UPDATE_INTERVAL
@@ -95,12 +94,6 @@ async def async_setup_platform(
     password: str = config[CONF_PASSWORD]
     gateway: str = config[CONF_ID]
     update_interval: timedelta = config["update_interval"]
-
-    # TODO(richo) why does it string the default value
-    if config["use_sn"] and config["use_sn"] != "False":
-        unique_id = gateway
-    else:
-        unique_id = None
 
     # TODO(richo) why does it string the default value
     if config["prefix"] and config["prefix"] != "False":
@@ -222,8 +215,8 @@ class OperatingModeSelect(
             _LOGGER.error("Unknown operating mode option: %s", option)
             return
 
-        soc = self._reserves.get(option)
-        mode_obj = _OPTION_TO_MODE_FACTORY[option](soc=soc) if soc is not None else _OPTION_TO_MODE_FACTORY[option]()
+        soc = self._reserves[option]
+        mode_obj = _OPTION_TO_MODE_FACTORY[option](soc=soc)
 
         _LOGGER.info(
             "Setting FranklinWH operating mode to: %s (reserve=%s%%)", option, soc
