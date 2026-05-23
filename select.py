@@ -14,7 +14,7 @@ from homeassistant.components.select import (
     SelectEntity,
 )
 from homeassistant.const import CONF_ID, CONF_PASSWORD, CONF_USERNAME
-from homeassistant.core import HomeAssistant
+from homeassistant.core import HomeAssistant, callback
 import homeassistant.helpers.config_validation as cv
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
@@ -193,6 +193,13 @@ class OperatingModeSelect(
         self._client = client
         self._attr_unique_id = gateway + "_operating_mode"
         self._reserves = reserves
+        self._optimistic_option: str | None = None
+
+    @callback
+    def _handle_coordinator_update(self) -> None:
+        """Clear optimistic state once the coordinator confirms the actual mode."""
+        self._optimistic_option = None
+        super()._handle_coordinator_update()
 
     @property
     def available(self) -> bool:
@@ -205,6 +212,8 @@ class OperatingModeSelect(
     @property
     def current_option(self) -> str | None:
         """Return the currently active operating mode."""
+        if self._optimistic_option is not None:
+            return self._optimistic_option
         if self.coordinator.data is None:
             return None
         return _API_TO_OPTION.get(self.coordinator.data)
@@ -221,6 +230,13 @@ class OperatingModeSelect(
         _LOGGER.info(
             "Setting FranklinWH operating mode to: %s (reserve=%s%%)", option, soc
         )
+
+        # Optimistically reflect the new mode in the UI immediately, before the
+        # API call completes. _handle_coordinator_update() clears this once the
+        # coordinator confirms the actual state from the gateway.
+        self._optimistic_option = option
+        self.async_write_ha_state()
+
         try:
             await self._client.set_mode(mode_obj)
         except httpx.ReadTimeout:
@@ -231,5 +247,5 @@ class OperatingModeSelect(
                 option,
             )
 
-        # Refresh so the entity state reflects the change immediately
+        # Refresh to confirm the actual state and clear the optimistic value.
         await self.coordinator.async_refresh()
