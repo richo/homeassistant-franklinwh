@@ -89,8 +89,6 @@ This creates a single `select` entity — **FranklinWH Operating Mode** — with
 
 When switching modes the battery reserve is set to the value configured above. The defaults match the FranklinWH app defaults (20 % for Time of Use / Self Consumption, 100 % for Emergency Backup). Set these to match your preferred reserves so they are preserved when switching modes from Home Assistant.
 
-You can use this entity in automations, scripts, or Lovelace dashboards. For example, to automatically switch to Emergency Backup when a storm warning is issued, or back to Time of Use on a schedule.
-
 ### Smart Relays
 
 The integration can also manage smart relays, if you have them installed in your gateway. It is
