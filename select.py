@@ -82,6 +82,13 @@ _WORK_MODE_TO_API: dict[int, str] = {
     3: _API_EMERGENCY_BACKUP,
 }
 
+# Reverse mapping: UI option string → workMode int (for reserve lookups)
+_OPTION_TO_WORK_MODE: dict[str, int] = {
+    OPTION_TIME_OF_USE: 1,
+    OPTION_SELF_CONSUMPTION: 2,
+    OPTION_EMERGENCY_BACKUP: 3,
+}
+
 
 async def async_setup_platform(
     hass: HomeAssistant,
@@ -104,19 +111,24 @@ async def async_setup_platform(
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
 
-    # Start with the config-supplied values as the initial defaults.  Once the
-    # coordinator performs its first successful fetch, get_tou_list() will
-    # overwrite these with the live values stored on the gateway, so users no
-    # longer need to set tou_reserve_pct / self_consumption_reserve_pct /
-    # emergency_backup_reserve_pct in their configuration.yaml.
-    reserves: dict[str, int] = {
-        OPTION_TIME_OF_USE: config["tou_reserve_pct"],
-        OPTION_SELF_CONSUMPTION: config["self_consumption_reserve_pct"],
-        OPTION_EMERGENCY_BACKUP: config["emergency_backup_reserve_pct"],
+    # Seed last-known reserves from config-supplied values (workMode int keys).
+    # After the first successful API fetch these are overwritten with live
+    # gateway data and carried forward across fallback-path polls, so
+    # async_select_option() always uses the most-recently-confirmed reserve
+    # rather than reverting to a stale YAML default.
+    _last_known_reserves: dict[int, int] = {
+        1: config["tou_reserve_pct"],
+        2: config["self_consumption_reserve_pct"],
+        3: config["emergency_backup_reserve_pct"],
     }
 
-    async def _update_data() -> str:
-        """Fetch the current operating mode (and live reserve SOC) from the gateway."""
+    async def _update_data() -> dict:
+        """Fetch operating mode and per-mode reserve SOC from the gateway.
+
+        Returns ``{"mode": <api_mode_str>, "reserves": {workMode: soc, ...}}``.
+        On the fallback path the reserves key carries the last successfully
+        fetched values so async_select_option() always has consistent SOC data.
+        """
         _LOGGER.debug("Fetching operating mode from FranklinWH")
 
         # Primary: getGatewayTouListV2 returns both the current mode and the
@@ -141,21 +153,17 @@ async def async_setup_platform(
             if work_mode is not None:
                 mode_name = _WORK_MODE_TO_API.get(int(work_mode))
                 if mode_name is not None:
-                    # Update the shared reserves dict in-place so the entity's
-                    # async_select_option() automatically picks up live values.
+                    # Persist the freshly-fetched reserves so they survive a
+                    # later fallback-path poll.
                     for wm_int, soc in tou.get("reserves", {}).items():
-                        option = _API_TO_OPTION.get(
-                            _WORK_MODE_TO_API.get(int(wm_int), ""), ""
-                        )
-                        if option:
-                            reserves[option] = int(soc)
+                        _last_known_reserves[int(wm_int)] = int(soc)
                     _LOGGER.debug(
                         "get_tou_list(): workMode=%s → %s, reserves=%s",
                         work_mode,
                         mode_name,
-                        reserves,
+                        _last_known_reserves,
                     )
-                    return mode_name
+                    return {"mode": mode_name, "reserves": dict(_last_known_reserves)}
             raise UpdateFailed(f"Unrecognised current_work_mode: {work_mode!r}")
         except UpdateFailed:
             raise
@@ -177,8 +185,8 @@ async def async_setup_platform(
 
         # Fallback: get_composite_info() returns currentWorkMode (1/2/3) using
         # the same encoding as Mode.workMode and is reliable across firmware.
-        # Reserves are not updated in this path — the config/default values
-        # (or the last successfully fetched values) remain in effect.
+        # Reserves are not updated here — _last_known_reserves carries the most
+        # recently fetched values (or YAML defaults on first boot).
         try:
             composite = await client.get_composite_info()
             work_mode = composite.get("currentWorkMode")
@@ -186,11 +194,12 @@ async def async_setup_platform(
                 mode_name = _WORK_MODE_TO_API.get(int(work_mode))
                 if mode_name is not None:
                     _LOGGER.debug(
-                        "currentWorkMode=%s → mode %s (reserves unchanged)",
+                        "currentWorkMode=%s → mode %s (reserves from last good fetch: %s)",
                         work_mode,
                         mode_name,
+                        _last_known_reserves,
                     )
-                    return mode_name
+                    return {"mode": mode_name, "reserves": dict(_last_known_reserves)}
             raise UpdateFailed(f"Unrecognised currentWorkMode: {work_mode!r}")
         except UpdateFailed:
             raise
@@ -201,7 +210,7 @@ async def async_setup_platform(
         except Exception as e:  # noqa: BLE001
             raise UpdateFailed(f"Error reading operating mode: {e}") from e
 
-    coordinator = DataUpdateCoordinator[str](
+    coordinator = DataUpdateCoordinator[dict](
         hass,
         _LOGGER,
         name="franklinwh_mode",
@@ -213,11 +222,11 @@ async def async_setup_platform(
     # Initial fetch so the entity is available immediately on startup
     await coordinator.async_refresh()
 
-    async_add_entities([OperatingModeSelect(coordinator, prefix, gateway, client, reserves)])
+    async_add_entities([OperatingModeSelect(coordinator, prefix, gateway, client)])
 
 
 class OperatingModeSelect(
-    CoordinatorEntity[DataUpdateCoordinator[str]],
+    CoordinatorEntity[DataUpdateCoordinator[dict]],
     SelectEntity,
 ):
     """Select entity exposing the FranklinWH operating mode."""
@@ -230,14 +239,12 @@ class OperatingModeSelect(
         prefix: str,
         gateway: str,
         client: franklinwh.Client,
-        reserves: dict[str, int],
     ) -> None:
         """Initializer."""
         super().__init__(coordinator)
         self._attr_name = f"{prefix} Operating Mode"
         self._client = client
         self._attr_unique_id = gateway + "_operating_mode"
-        self._reserves = reserves
         self._optimistic_option: str | None = None
 
     @callback
@@ -261,7 +268,7 @@ class OperatingModeSelect(
             return self._optimistic_option
         if self.coordinator.data is None:
             return None
-        return _API_TO_OPTION.get(self.coordinator.data)
+        return _API_TO_OPTION.get(self.coordinator.data["mode"])
 
     async def async_select_option(self, option: str) -> None:
         """Change the operating mode."""
@@ -269,8 +276,21 @@ class OperatingModeSelect(
             _LOGGER.error("Unknown operating mode option: %s", option)
             return
 
-        soc = self._reserves[option]
-        mode_obj = _OPTION_TO_MODE_FACTORY[option](soc=soc)
+        if self.coordinator.data is None:
+            _LOGGER.error("Cannot switch mode: coordinator data is unavailable")
+            return
+
+        work_mode = _OPTION_TO_WORK_MODE[option]
+        soc = self.coordinator.data["reserves"].get(work_mode)
+        if soc is None:
+            _LOGGER.error(
+                "No reserve data for %s (workMode=%s) in coordinator data",
+                option,
+                work_mode,
+            )
+            return
+
+        mode_obj = _OPTION_TO_MODE_FACTORY[option](soc=int(soc))
 
         _LOGGER.info(
             "Setting FranklinWH operating mode to: %s (reserve=%s%%)", option, soc
