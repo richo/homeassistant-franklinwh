@@ -104,6 +104,11 @@ async def async_setup_platform(
     fetcher = franklinwh.TokenFetcher(username, password)
     client = franklinwh.Client(fetcher, gateway)
 
+    # Start with the config-supplied values as the initial defaults.  Once the
+    # coordinator performs its first successful fetch, get_tou_list() will
+    # overwrite these with the live values stored on the gateway, so users no
+    # longer need to set tou_reserve_pct / self_consumption_reserve_pct /
+    # emergency_backup_reserve_pct in their configuration.yaml.
     reserves: dict[str, int] = {
         OPTION_TIME_OF_USE: config["tou_reserve_pct"],
         OPTION_SELF_CONSUMPTION: config["self_consumption_reserve_pct"],
@@ -111,13 +116,49 @@ async def async_setup_platform(
     }
 
     async def _update_data() -> str:
-        """Fetch the current operating mode from the gateway."""
+        """Fetch the current operating mode (and live reserve SOC) from the gateway."""
         _LOGGER.debug("Fetching operating mode from FranklinWH")
 
-        # Try the library's get_mode() first
+        # Primary: getGatewayTouListV2 returns both the current mode and the
+        # per-mode reserve SOC percentages stored on the gateway.  Inlined here
+        # so it works with older franklinwh PyPI versions that predate
+        # client.get_tou_list().
+        async def _get_tou_list():
+            url = client.url_base + "hes-gateway/terminal/tou/getGatewayTouListV2"
+            result = (await client._post(url, "", params={"showType": "1"}))["result"]
+            current_id = result["currendId"]
+            res: dict[int, float] = {}
+            current_wm: int | None = None
+            for entry in result["list"]:
+                res[entry["workMode"]] = entry["soc"]
+                if entry["id"] == current_id:
+                    current_wm = entry["workMode"]
+            return {"reserves": res, "current_work_mode": current_wm}
+
         try:
-            mode_name, _ = await client.get_mode()
-            return mode_name
+            tou = await _get_tou_list()
+            work_mode = tou.get("current_work_mode")
+            if work_mode is not None:
+                mode_name = _WORK_MODE_TO_API.get(int(work_mode))
+                if mode_name is not None:
+                    # Update the shared reserves dict in-place so the entity's
+                    # async_select_option() automatically picks up live values.
+                    for wm_int, soc in tou.get("reserves", {}).items():
+                        option = _API_TO_OPTION.get(
+                            _WORK_MODE_TO_API.get(int(wm_int), ""), ""
+                        )
+                        if option:
+                            reserves[option] = int(soc)
+                    _LOGGER.debug(
+                        "get_tou_list(): workMode=%s → %s, reserves=%s",
+                        work_mode,
+                        mode_name,
+                        reserves,
+                    )
+                    return mode_name
+            raise UpdateFailed(f"Unrecognised current_work_mode: {work_mode!r}")
+        except UpdateFailed:
+            raise
         except franklinwh.client.DeviceTimeoutException as e:
             raise UpdateFailed(f"Device timeout: {e}") from e
         except franklinwh.client.GatewayOfflineException as e:
@@ -127,15 +168,17 @@ async def async_setup_platform(
         except franklinwh.client.InvalidCredentialsException as e:
             raise UpdateFailed(f"Invalid credentials: {e}") from e
         except Exception as e:  # noqa: BLE001
-            # get_mode() raises KeyError when runingMode is not in MODE_MAP —
-            # observed on some firmware versions. Fall through to the fallback.
+            # get_tou_list() is a newer endpoint; some firmware versions may not
+            # support it.  Fall through to the get_composite_info() fallback.
             _LOGGER.debug(
-                "get_mode() raised %s, falling back to composite info",
+                "get_tou_list() raised %s, falling back to composite info",
                 type(e).__name__,
             )
 
         # Fallback: get_composite_info() returns currentWorkMode (1/2/3) using
         # the same encoding as Mode.workMode and is reliable across firmware.
+        # Reserves are not updated in this path — the config/default values
+        # (or the last successfully fetched values) remain in effect.
         try:
             composite = await client.get_composite_info()
             work_mode = composite.get("currentWorkMode")
@@ -143,7 +186,9 @@ async def async_setup_platform(
                 mode_name = _WORK_MODE_TO_API.get(int(work_mode))
                 if mode_name is not None:
                     _LOGGER.debug(
-                        "currentWorkMode=%s → mode %s", work_mode, mode_name
+                        "currentWorkMode=%s → mode %s (reserves unchanged)",
+                        work_mode,
+                        mode_name,
                     )
                     return mode_name
             raise UpdateFailed(f"Unrecognised currentWorkMode: {work_mode!r}")
