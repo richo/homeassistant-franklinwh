@@ -16,6 +16,9 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 - Generator and home load insights
 - Switch load and usage tracking
 - Support for V2L (Vehicle-to-Load) data
+- **Operating mode control** (Self Consumption / Time of Use / Emergency Backup)
+- **Grid export mode control** (Solar Only / Solar + Battery / No Export)
+- **Grid export power limit** (kW cap on grid feed)
 
 ---
 
@@ -55,7 +58,22 @@ sensor:
     password: !secret franklinwh_password
     id: "100xxxxxxxxxxxx"
     tolerate_stale_data: true
+
+select:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+
+number:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    max_export_kw: 10.0
 ```
+
+The `select` platform adds operating mode and export mode controls. The `number` platform adds the export power limit slider. Both are optional — omit them if you only need monitoring.
 
 The `tolerate_stale_data` key is not required, but is recommended. The
 FranklinWH API often fails to return valid data, that flag will persist the
@@ -91,16 +109,45 @@ switch:
     name: "FWH switch2"
 ```
 
+### Operating Mode and Export Control
+
+The integration can control the FranklinWH operating mode and grid export settings. These are polled every 5 minutes by default (modes change rarely).
+
+```yaml
+select:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+
+number:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+    max_export_kw: 10.0
+```
+
+This creates three entities:
+- **FranklinWH Operating Mode** — select between `self_consumption`, `time_of_use`, and `emergency_backup`. The current reserve SOC is read from the device and preserved when changing modes.
+- **FranklinWH Export Mode** — select between `solar_only`, `solar_and_apower`, and `no_export`. The current power limit is preserved when changing export mode.
+- **FranklinWH Export Limit** — set the maximum export power in kW. Setting to the configured maximum is treated as unlimited.
+
+> ⚠️ Grid export control requires your utility and FranklinWH plan to support grid export. Check the FranklinWH app before enabling `solar_and_apower`.
+
+> ℹ️ The FranklinWH API does not push updates to Home Assistant. Changes made in the FranklinWH app will be reflected in HA on the next poll cycle — up to 5 minutes by default. Lower `update_interval` in your config if you need faster sync.
+
 After updating your configuration, restart Home Assistant to apply the changes.
 
 ### Advanced Configuration
 
-| Configuration Option         | Unit   | Description                                                               | sensor | switch |
-| ---------------------------- | ------ | --------------------------------------------------------------------------| ------ | ------ |
-| `use_sn`                     | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
-| `prefix`                     | string | Specity a prefix to be used when creating entities                        |  ✅    |   ✅   |
-| `update_interval`            | time   | Period to update entities from franklinwh. Default 30s                    |  ✅    |   ✅   |
-| `tolerate_stale_data`        | bool   | Continue to show stale data on the dashboard for one cycle instead of showing the sensor unavailable                   |  ✅    |        |
+| Configuration Option         | Unit   | Description                                                               | sensor | switch | select | number |
+| ---------------------------- | ------ | --------------------------------------------------------------------------| ------ | ------ | ------ | ------ |
+| `use_sn`                     | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |   ✅   |   ✅   |
+| `prefix`                     | string | Specify a prefix to be used when creating entities                        |  ✅    |   ✅   |   ✅   |   ✅   |
+| `update_interval`            | time   | Update period. Default 30s (sensor/switch); 300s (select/number)          |  ✅    |   ✅   |   ✅   |   ✅   |
+| `tolerate_stale_data`        | bool   | Show stale data for one cycle instead of marking the sensor unavailable   |  ✅    |        |        |        |
+| `max_export_kw`              | float  | Maximum value (kW) for the export limit slider. Default 10.0              |        |        |        |   ✅   |
 
 
 ## Available Entities
@@ -127,6 +174,9 @@ After updating your configuration, restart Home Assistant to apply the changes.
 | FranklinWH V2L Use                  | Power use via Vehicle-to-Load             | W         |
 | FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
 | FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
+| FranklinWH Operating Mode           | Select operating mode (select platform)   | —         |
+| FranklinWH Export Mode              | Select grid export mode (select platform) | —         |
+| FranklinWH Export Limit             | Grid export power cap (number platform)   | kW        |
 
 # Flipping sensors
 
