@@ -16,6 +16,8 @@ This is a custom integration for [Home Assistant](https://www.home-assistant.io/
 - Generator and home load insights
 - Switch load and usage tracking
 - Support for V2L (Vehicle-to-Load) data
+- **Operating mode control** — switch between Time of Use, Self Consumption, and Emergency Backup
+- **Battery reserve control** — read and set per-mode reserve SOC percentages without changing operating mode
 
 ---
 
@@ -63,6 +65,50 @@ last good data until it's able to fetch more, substantially smoothing out the
 graphs. However, if accuracy is more important to you than consistency, you
 should not enable that flag.
 
+### Operating Mode
+
+The integration can expose an **Operating Mode** select entity that lets you switch your Agate between its three operating modes directly from Home Assistant — no app required.
+
+```yaml
+select:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+```
+
+This creates a single `select` entity — **FranklinWH Operating Mode** — with three options:
+
+| Option | Description |
+|--------|-------------|
+| `Time of Use` | Optimises for time-of-use electricity tariffs |
+| `Self Consumption` | Maximises use of solar / stored energy |
+| `Emergency Backup` | Keeps battery as full as possible for outage protection |
+
+When switching modes the battery reserve is read live from the gateway (via `getGatewayTouListV2`) and set accordingly. You no longer need to configure reserve percentages in your YAML — the values stored on your Agate are used automatically. The optional `tou_reserve_pct`, `self_consumption_reserve_pct`, and `emergency_backup_reserve_pct` config keys are still accepted as fallback defaults (used only before the first successful API fetch), but are no longer required.
+
+### Battery Reserve SOC
+
+The integration can expose per-mode battery reserve entities that let you read and adjust the reserve SOC for each operating mode — without switching modes.
+
+```yaml
+number:
+  - platform: franklin_wh
+    username: "email@domain.com"
+    password: !secret franklinwh_password
+    id: "100xxxxxxxxxxxx"
+```
+
+This creates three entities:
+
+| Entity | Description | Editable |
+|--------|-------------|----------|
+| FranklinWH Time of Use Reserve | Reserve SOC % for Time of Use mode | ✅ |
+| FranklinWH Self Consumption Reserve | Reserve SOC % for Self Consumption mode | ✅ |
+| FranklinWH Emergency Backup Reserve | Reserve SOC % for Emergency Backup mode | 🔒 Always 100% |
+
+Changes are written directly to the gateway via `updateSocV2` and take effect immediately without switching modes. The Emergency Backup reserve is always 100% (set by the FranklinWH platform) and is exposed as a read-only sensor.
+
 ### Smart Relays
 
 The integration can also manage smart relays, if you have them installed in your gateway. It is
@@ -95,12 +141,15 @@ After updating your configuration, restart Home Assistant to apply the changes.
 
 ### Advanced Configuration
 
-| Configuration Option         | Unit   | Description                                                               | sensor | switch |
-| ---------------------------- | ------ | --------------------------------------------------------------------------| ------ | ------ |
-| `use_sn`                     | bool   | Use the gateway's SN as a prefix when creating entities                   |  ✅    |   ✅   |
-| `prefix`                     | string | Specity a prefix to be used when creating entities                        |  ✅    |   ✅   |
-| `update_interval`            | time   | Period to update entities from franklinwh. Default 30s                    |  ✅    |   ✅   |
-| `tolerate_stale_data`        | bool   | Continue to show stale data on the dashboard for one cycle instead of showing the sensor unavailable                   |  ✅    |        |
+| Configuration Option              | Unit   | Description                                                                                              | sensor | switch | select | number |
+| --------------------------------- | ------ | ---------------------------------------------------------------------------------------------------------| ------ | ------ | ------ | ------ |
+| `use_sn`                          | bool   | Use the gateway's SN as a prefix when creating entities                                                  |  ✅    |   ✅   |        |        |
+| `prefix`                          | string | Specify a prefix to be used when creating entities                                                       |  ✅    |   ✅   |   ✅   |   ✅   |
+| `update_interval`                 | time   | Period to update entities from franklinwh. Default 30s                                                   |  ✅    |   ✅   |   ✅   |   ✅   |
+| `tolerate_stale_data`             | bool   | Continue to show stale data on the dashboard for one cycle instead of showing the sensor unavailable     |  ✅    |        |        |        |
+| `tou_reserve_pct`                 | int    | _(Deprecated)_ Fallback battery reserve % for Time of Use before first API fetch. Default 20             |        |        |   ✅   |        |
+| `self_consumption_reserve_pct`    | int    | _(Deprecated)_ Fallback battery reserve % for Self Consumption before first API fetch. Default 20        |        |        |   ✅   |        |
+| `emergency_backup_reserve_pct`    | int    | _(Deprecated)_ Fallback battery reserve % for Emergency Backup before first API fetch. Default 100       |        |        |   ✅   |        |
 
 
 ## Available Entities
@@ -127,6 +176,20 @@ After updating your configuration, restart Home Assistant to apply the changes.
 | FranklinWH V2L Use                  | Power use via Vehicle-to-Load             | W         |
 | FranklinWH V2L Import               | Total energy drawn from V2L               | Wh        |
 | FranklinWH V2L Export               | Total energy delivered to V2L             | Wh        |
+
+### Select Entities
+
+| Entity Name                          | Description                               | Options                                                  |
+|--------------------------------------|-------------------------------------------|----------------------------------------------------------|
+| FranklinWH Operating Mode           | Current operating mode (read + write)     | Time of Use, Self Consumption, Emergency Backup          |
+
+### Number Entities
+
+| Entity Name                              | Description                                          | Unit | Editable |
+|------------------------------------------|------------------------------------------------------|------|----------|
+| FranklinWH Time of Use Reserve           | Battery reserve SOC for Time of Use mode             | %    | ✅       |
+| FranklinWH Self Consumption Reserve      | Battery reserve SOC for Self Consumption mode        | %    | ✅       |
+| FranklinWH Emergency Backup Reserve      | Battery reserve SOC for Emergency Backup mode        | %    | 🔒       |
 
 # Flipping sensors
 
