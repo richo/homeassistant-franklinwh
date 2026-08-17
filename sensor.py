@@ -39,6 +39,7 @@ from homeassistant.helpers.update_coordinator import (
 
 _LOGGER = logging.getLogger(__name__)
 DEFAULT_UPDATE_INTERVAL = 30
+FETCH_TIMEOUT = 30
 
 PLATFORM_SCHEMA = SENSOR_PLATFORM_SCHEMA.extend(
     {
@@ -136,7 +137,17 @@ async def async_setup_platform(
                 _LOGGER.warning("Trying again")
                 await asyncio.sleep(retry_delay)
             try:
-                data = await client.get_stats()
+                # Bound the fetch: without a timeout, a single hung request
+                # stops the DataUpdateCoordinator forever (the next poll is
+                # only scheduled once this one finishes) with nothing logged.
+                async with asyncio.timeout(FETCH_TIMEOUT):
+                    data = await client.get_stats()
+            except TimeoutError as e:
+                _LOGGER.warning(
+                    "Error getting data from FranklinWH - request hung for %ss: %s",
+                    FETCH_TIMEOUT,
+                    e,
+                )
             except franklinwh.client.DeviceTimeoutException as e:
                 _LOGGER.warning(
                     "Error getting data from FranklinWH - Device Timeout: %s", e
